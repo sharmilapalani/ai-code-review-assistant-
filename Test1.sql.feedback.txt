@@ -1,18 +1,22 @@
-1. Corrected Code
-
+1. Corrected Code:
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
 
-2. Syntax Errors
+2. Syntax Errors:
+- The original SQL statement is missing the column list after `SELECT` (such as `*`), which is required.
+- SQL keywords should ideally be in uppercase for readability, though it's not a syntax error.
+- Missing semicolon at the end (recommended for SQL scripts).
 
-- The SELECT statement is missing a column list or a wildcard (*). SQL syntax requires `SELECT column(s)` or `SELECT *`.
-- The SQL statement is missing a semicolon (`;`) at the end (optional in some databases, but good practice).
+3. Suggestions / Improvements:
+- Always specify the columns you need instead of using `*` for better performance and clarity, e.g. `SELECT CustomerID, CustomerName FROM Customer ...` if you only need certain columns.
+- Use consistent SQL keyword casing (uppercase is standard for readability).
+- Include comments if this is part of a larger script to explain the query’s purpose.
 
-3. Suggestions / Improvements
-
-- Explicitly list the column names you need instead of using `*` to improve performance and clarity, e.g., `SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;`
-- Use consistent capitalization for SQL keywords for readability.
-- Add comments if appropriate to explain why filtering for CustomerID > 30.
-- If you're working with a large database, consider using indexes on `CustomerID` for better performance.
-- Ensure the table and column names match your actual schema (some systems are case-sensitive).
+**Example with best practices:**
+```sql
+-- Retrieve all customers with CustomerID greater than 30
+SELECT *
+FROM Customer
+WHERE CustomerID > 30;
+```
