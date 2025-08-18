@@ -1,24 +1,21 @@
-1. Corrected Code
+1. Corrected Code  
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
 
 2. Syntax Errors  
-The original code has minor spacing issues which do not typically cause a syntax error in many SQL engines, but it's best practice to maintain proper spacing for readability. The syntactically correct version is above.
+✅ No syntax errors found.
 
-3. Suggestions / Improvements
-- **Readability:** Add spaces between SQL keywords for better readability.
-- **Best Practice:** Avoid using `SELECT *`; instead, specify only the columns you need. This improves performance and makes your code more maintainable.
-- **Semicolon:** It’s a good practice to end SQL statements with a semicolon.
-- **Case Style:** Use uppercase for SQL keywords for clarity.
+3. Suggestions / Improvements  
+- Use uppercase for SQL keywords (`SELECT`, `FROM`, `WHERE`) for better readability and SQL style conventions.
+- Avoid using `SELECT *` in production code. Instead, list specific columns you need, e.g., `SELECT CustomerID, CustomerName FROM Customer WHERE CustomerID > 30;`, as this makes your code more readable and efficient.
+- If your database is case-sensitive, ensure table and column names are spelled correctly.
+- Consider adding an `ORDER BY` clause if you want a consistent result order.
 
-**Example using best practices:**
+Example with suggested improvements:
 ```sql
-SELECT CustomerID, CustomerName, ContactName -- (replace with actual column names you need)
+SELECT CustomerID, CustomerName
 FROM Customer
-WHERE CustomerID > 30;
+WHERE CustomerID > 30
+ORDER BY CustomerID;
 ```
-
----
-
-Let me know if you want help tailoring the column list or if you have further queries!
