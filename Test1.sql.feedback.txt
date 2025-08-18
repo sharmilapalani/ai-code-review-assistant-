@@ -1,16 +1,25 @@
-**Review:**
-
-There are syntax errors in the given SQL statement:
-
-1. The `select` statement must specify what columns to select (e.g., `*` for all columns, or column names).
-2. The `from` clause is missing the column list after the `select` keyword.
-
-**Corrected Code:**
+1. Corrected Code
 
 ```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
+SELECT *
+FROM Customer
+WHERE CustomerID > 30;
 ```
 
-**Explanation:**
-- `SELECT *` selects all columns from the `Customer` table.
-- The rest remains the same, but now uses proper SQL syntax.
+---
+
+2. Syntax Errors
+
+- The `SELECT` statement is missing the column list (e.g., `*` or specific columns).
+- The `FROM` keyword comes after the column list in standard SQL.
+- Proper SQL statements should end with a semicolon (optional in some environments, but a good practice).
+
+---
+
+3. Suggestions / Improvements
+
+- Specify the columns you actually need instead of using `*` (e.g., `SELECT CustomerID, Name FROM Customer`) for better performance and clarity.
+- Consider indexing the `CustomerID` column if queries like this are frequent and the table is large.
+- Use uppercase for SQL keywords (as shown) for better readability.
+- If using user input for `CustomerID`, sanitize or use parameterized queries to prevent SQL injection.
+- Add comments if this query is part of a complex script to describe its purpose.
