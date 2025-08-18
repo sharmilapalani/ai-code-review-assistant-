@@ -1,35 +1,18 @@
-Here’s a review of your SQL code:
+**Review:**
 
-**Original code:**
+The SQL statement you provided has a syntax error. The correct `SELECT` statement should specify the columns to retrieve or use `*` for all columns. The correct syntax is:
+
 ```sql
-select from Customer where CustomerID > 30
+SELECT * FROM Customer WHERE CustomerID > 30;
 ```
 
-**Issues Identified:**
+**Corrections:**
+- Added `*` after `SELECT`
+- Uppercased the keywords for clarity (optional, but recommended)
+- Added a semicolon at the end (optional, but good practice)
 
-1. **Syntax Error:**  
-   The `SELECT` statement requires you to specify the columns you want to retrieve.  
-   - `SELECT *` for all columns  
-   - `SELECT CustomerID, CustomerName`, etc. for specific columns
+**Corrected Code:**
 
-2. **No Semicolon:**  
-   While not strictly required in all SQL clients, it's good practice to terminate statements with a semicolon.
-
-**Corrected code (retrieve all columns):**
 ```sql
-SELECT *
-FROM Customer
-WHERE CustomerID > 30;
+SELECT * FROM Customer WHERE CustomerID > 30;
 ```
-
-**Suggestions:**
-
-- If you only need some columns, enumerate them for performance and clarity:
-    ```sql
-    SELECT CustomerID, CustomerName
-    FROM Customer
-    WHERE CustomerID > 30;
-    ```
-- Add `ORDER BY` if you want sorted results.
-
-Let me know if you need more advanced feedback or additional context!
