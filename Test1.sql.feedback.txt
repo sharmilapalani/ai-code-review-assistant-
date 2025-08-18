@@ -1,18 +1,16 @@
 **Review:**
 
-The SQL statement you provided has a syntax error. The correct `SELECT` statement should specify the columns to retrieve or use `*` for all columns. The correct syntax is:
+There are syntax errors in the given SQL statement:
 
-```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
-```
-
-**Corrections:**
-- Added `*` after `SELECT`
-- Uppercased the keywords for clarity (optional, but recommended)
-- Added a semicolon at the end (optional, but good practice)
+1. The `select` statement must specify what columns to select (e.g., `*` for all columns, or column names).
+2. The `from` clause is missing the column list after the `select` keyword.
 
 **Corrected Code:**
 
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
+
+**Explanation:**
+- `SELECT *` selects all columns from the `Customer` table.
+- The rest remains the same, but now uses proper SQL syntax.
