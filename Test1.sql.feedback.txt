@@ -1,45 +1,46 @@
-Thank you for providing your SQL query. Here’s a review:
+Here’s a review of your code:
 
-### Your Query:
 ```sql
-select from Customer where CustomerID > 30
+select from Customer where CustomerID>30
 ```
 
----
+### Issues Found
 
-## Issues Identified
+1. **Missing Column List**  
+   In SQL, you must specify which columns to select, or use `*` to select all:
+   ```sql
+   SELECT * FROM Customer WHERE CustomerID > 30
+   ```
 
-1. **Missing Column List:**
-   - The `SELECT` statement must specify which columns to return.
-   - Example: `SELECT *` for all columns, or `SELECT CustomerID, Name` for specific columns.
+2. **Capitalization (Best Practice)**  
+   While not required, it is standard SQL convention to write keywords in uppercase for readability. Your code could be:
+   ```sql
+   SELECT * FROM Customer WHERE CustomerID > 30
+   ```
 
-2. **Readability:**
-   - SQL keywords are typically written in uppercase for better readability.
+3. **Semicolon (Optional, but Recommended)**  
+   Some SQL clients expect queries to end with a semicolon:
+   ```sql
+   SELECT * FROM Customer WHERE CustomerID > 30;
+   ```
 
----
+### Recommendation
 
-## Corrected Version
+Change your query to:
 
-If you want all columns:
 ```sql
-SELECT *
-FROM Customer
-WHERE CustomerID > 30;
+SELECT * FROM Customer WHERE CustomerID > 30;
 ```
 
-Or, if you want specific columns (e.g., CustomerID and Name):
+**Optional:** If you only need certain columns, specify them instead of `*`:
+
 ```sql
-SELECT CustomerID, Name
-FROM Customer
-WHERE CustomerID > 30;
+SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;
 ```
 
----
+#### Summary
+- List columns to select (or use *)
+- Use proper SQL syntax and casing
+- Add a semicolon if required
 
-## Summary
-
-- Always specify columns in the `SELECT` statement.
-- Use SQL keyword casing for clarity.
-- Always end statements with a semicolon where required (depends on environment).
-
-Let me know if you have any questions or need further optimization!
+Let me know if you have other queries or want a more advanced review!
