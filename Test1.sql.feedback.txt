@@ -1,25 +1,18 @@
 1. Corrected Code
 
 ```sql
-SELECT *
-FROM Customer
-WHERE CustomerID > 30;
+SELECT * FROM Customer WHERE CustomerID > 30;
 ```
-
----
 
 2. Syntax Errors
 
-- The `SELECT` statement is missing the column list (e.g., `*` or specific columns).
-- The `FROM` keyword comes after the column list in standard SQL.
-- Proper SQL statements should end with a semicolon (optional in some environments, but a good practice).
-
----
+- The SELECT statement is missing a column list or a wildcard (*). SQL syntax requires `SELECT column(s)` or `SELECT *`.
+- The SQL statement is missing a semicolon (`;`) at the end (optional in some databases, but good practice).
 
 3. Suggestions / Improvements
 
-- Specify the columns you actually need instead of using `*` (e.g., `SELECT CustomerID, Name FROM Customer`) for better performance and clarity.
-- Consider indexing the `CustomerID` column if queries like this are frequent and the table is large.
-- Use uppercase for SQL keywords (as shown) for better readability.
-- If using user input for `CustomerID`, sanitize or use parameterized queries to prevent SQL injection.
-- Add comments if this query is part of a complex script to describe its purpose.
+- Explicitly list the column names you need instead of using `*` to improve performance and clarity, e.g., `SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;`
+- Use consistent capitalization for SQL keywords for readability.
+- Add comments if appropriate to explain why filtering for CustomerID > 30.
+- If you're working with a large database, consider using indexes on `CustomerID` for better performance.
+- Ensure the table and column names match your actual schema (some systems are case-sensitive).
