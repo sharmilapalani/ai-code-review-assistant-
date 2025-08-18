@@ -1,46 +1,38 @@
-Here’s a review of your code:
+Here are some observations and suggestions for the code you provided:
 
-```sql
-select from Customer where CustomerID>30
-```
-
-### Issues Found
-
-1. **Missing Column List**  
-   In SQL, you must specify which columns to select, or use `*` to select all:
-   ```sql
-   SELECT * FROM Customer WHERE CustomerID > 30
-   ```
-
-2. **Capitalization (Best Practice)**  
-   While not required, it is standard SQL convention to write keywords in uppercase for readability. Your code could be:
-   ```sql
-   SELECT * FROM Customer WHERE CustomerID > 30
-   ```
-
-3. **Semicolon (Optional, but Recommended)**  
-   Some SQL clients expect queries to end with a semicolon:
-   ```sql
-   SELECT * FROM Customer WHERE CustomerID > 30;
-   ```
-
-### Recommendation
-
-Change your query to:
-
+### 1. SQL Syntax Error
+The SQL statement is missing the `SELECT` keyword’s column list (or `*`) and is malformed. The correct syntax should be:
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
-
-**Optional:** If you only need certain columns, specify them instead of `*`:
-
+or, if you want to select specific columns:
 ```sql
-SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;
+SELECT Column1, Column2 FROM Customer WHERE CustomerID > 30;
 ```
 
-#### Summary
-- List columns to select (or use *)
-- Use proper SQL syntax and casing
-- Add a semicolon if required
+### 2. Semicolon Terminator
+While not always required, it's standard practice to end SQL statements with a semicolon (`;`). This improves portability and avoids issues in certain SQL clients.
 
-Let me know if you have other queries or want a more advanced review!
+### 3. Code Style & Clarity
+- SQL keywords (`SELECT`, `FROM`, `WHERE`) are conventionally written in uppercase for readability.
+- Indent your code properly, especially with more complex queries.
+
+### 4. Safety Considerations
+- If `CustomerID` is a numeric field, your usage is appropriate.
+- If you are using user input for the `CustomerID`, beware of SQL injection risks.
+
+### 5. Optional: Documentation / Comments
+If this query is part of a larger script, consider adding a comment explaining what the query is doing.
+
+---
+
+**Corrected example:**
+```sql
+-- Select customers with CustomerID greater than 30
+SELECT *
+FROM Customer
+WHERE CustomerID > 30;
+```
+
+**Summary:**  
+Your SQL statement is missing the column selection after the `SELECT` keyword. Use `SELECT *` to retrieve all columns, and adjust as suggested for best practices.
