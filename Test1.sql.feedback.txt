@@ -1,21 +1,22 @@
 1. Corrected Code  
-```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
-```
+✅ Your code is correct. No syntax errors found.
 
 2. Syntax Errors  
 ✅ No syntax errors found.
 
-3. Suggestions / Improvements  
-- Use uppercase for SQL keywords (`SELECT`, `FROM`, `WHERE`) for better readability and SQL style conventions.
-- Avoid using `SELECT *` in production code. Instead, list specific columns you need, e.g., `SELECT CustomerID, CustomerName FROM Customer WHERE CustomerID > 30;`, as this makes your code more readable and efficient.
-- If your database is case-sensitive, ensure table and column names are spelled correctly.
-- Consider adding an `ORDER BY` clause if you want a consistent result order.
+3. Suggestions / Improvements
 
-Example with suggested improvements:
+- **Explicit Columns**: Instead of using `SELECT *`, it is generally a best practice to explicitly specify the columns you need (e.g., `SELECT CustomerID, CustomerName FROM Customer`). This enhances readability and reduces the load on the database if the table has many columns.
+- **Index Usage**: Ensure that there is an index on the `CustomerID` column to optimize the performance of the `WHERE CustomerID > 30` condition.
+- **Semicolon Usage**: While the trailing semicolon is not strictly necessary in all SQL dialects, it is a good habit as it helps when you have multiple queries.
+- **Consistency**: Maintain consistent capitalization for SQL keywords and identifiers according to your project's style guide.
+
+Example following best practices:
+
 ```sql
 SELECT CustomerID, CustomerName
 FROM Customer
-WHERE CustomerID > 30
-ORDER BY CustomerID;
+WHERE CustomerID > 30;
 ```
+
+If you have specific columns you want to retrieve, it's better to list them explicitly. If you truly need all columns, your original query is fine.

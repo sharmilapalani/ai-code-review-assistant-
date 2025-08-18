@@ -1,1 +1,1 @@
-select * from Customer where CustomerID>30
+SELECT * FROM Customer WHERE CustomerID > 30;
