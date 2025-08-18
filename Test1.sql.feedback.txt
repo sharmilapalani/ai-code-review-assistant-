@@ -1,29 +1,45 @@
-Here’s a review of your SQL query:
+Thank you for providing your SQL query. Here’s a review:
 
-**Your code:**
+### Your Query:
 ```sql
-select from Customer where CustomerID>30
+select from Customer where CustomerID > 30
 ```
 
-**Issues & Improvements:**
+---
 
-1. **Missing column list in SELECT:**  
-   SQL requires you to specify the columns you want to retrieve after `SELECT`. If you want all columns, use `*`. For specific columns, list them, e.g., `SELECT CustomerID, Name`.
+## Issues Identified
 
-2. **Corrected Query:**
-   ```sql
-   SELECT * FROM Customer WHERE CustomerID > 30;
-   ```
-   Or, for example:
-   ```sql
-   SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;
-   ```
+1. **Missing Column List:**
+   - The `SELECT` statement must specify which columns to return.
+   - Example: `SELECT *` for all columns, or `SELECT CustomerID, Name` for specific columns.
 
-3. **Code Style:**  
-   - Use uppercase for SQL keywords for readability.
-   - End statements with a semicolon (optional for some environments, but recommended).
+2. **Readability:**
+   - SQL keywords are typically written in uppercase for better readability.
 
-**Summary:**  
-You need to specify the columns you wish to select. Otherwise, this will raise a syntax error. 
+---
 
-Let me know if you want suggestions for querying/filtering/sorting, or want performance tips!
+## Corrected Version
+
+If you want all columns:
+```sql
+SELECT *
+FROM Customer
+WHERE CustomerID > 30;
+```
+
+Or, if you want specific columns (e.g., CustomerID and Name):
+```sql
+SELECT CustomerID, Name
+FROM Customer
+WHERE CustomerID > 30;
+```
+
+---
+
+## Summary
+
+- Always specify columns in the `SELECT` statement.
+- Use SQL keyword casing for clarity.
+- Always end statements with a semicolon where required (depends on environment).
+
+Let me know if you have any questions or need further optimization!
