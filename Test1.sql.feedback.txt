@@ -1,51 +1,32 @@
-Here is a review of your SQL query:
+Here's a review of your SQL statement:
 
-**Your code:**
+### Original Code
 ```sql
 select from Customer where CustomerID>30
 ```
 
----
+### Issues
 
-### Issues Identified
+1. **Missing SELECT columns**:  
+   The statement does not specify what columns to select. In SQL, you must either specify the column names or use `*` to select all columns.
 
-1. **Missing Columns in SELECT Statement**
+2. **Optional but recommended:**  
+   SQL keywords are often in uppercase for readability (`SELECT`, `FROM`, etc.).
 
-   - You must specify which columns to select, or use `*` to select all columns.
-   - The correct basic syntax:  
-     ```sql
-     SELECT column1, column2 FROM table WHERE condition;
-     ```
+### Corrected Version
 
-2. **SQL Keywords Not Properly Capitalized (Optional/Style)**
-
-   - While not mandatory, capitalizing SQL keywords improves readability.
-
----
-
-### Corrected Query
-
-If you want to select *all* columns for customers with `CustomerID > 30`:
-
+To select all columns:
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
 
-Or, if you want specific columns (for clarity):
-
+Or, to select specific columns (e.g., `CustomerID`, `Name`):
 ```sql
-SELECT CustomerID, FirstName, LastName FROM Customer WHERE CustomerID > 30;
+SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;
 ```
 
 ---
 
-### Suggestions
-
-- Always specify what you want to select.
-- Follow SQL best practices for readability (capitalizing keywords).
-- Consider explicitly naming columns instead of using `*` for better maintainability.
-
----
-
 **Summary:**  
-Your current query is missing the column specification in the `SELECT` clause, which will result in a syntax error (in most SQL dialects). Adjust as shown above for proper function.
+- Always specify columns after `SELECT` (or use `*` for all columns).  
+- Capitalize SQL keywords for standard convention.
