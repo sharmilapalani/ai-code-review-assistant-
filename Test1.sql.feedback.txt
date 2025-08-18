@@ -1,44 +1,51 @@
-Thank you for sharing your SQL code for review. Here are several points of feedback:
+Here is a review of your SQL query:
 
-### Original Query
+**Your code:**
 ```sql
 select from Customer where CustomerID>30
 ```
 
-### Issues and Suggestions
+---
 
-1. **SELECT List Missing**
+### Issues Identified
 
-   - The `SELECT` statement is missing the columns you wish to retrieve. You need to specify columns or use `*` for all columns.
-   
-   ```sql
-   SELECT * FROM Customer WHERE CustomerID > 30;
-   ```
-   Or, to improve clarity and efficiency, specify only needed columns:
-   ```sql
-   SELECT CustomerID, CustomerName FROM Customer WHERE CustomerID > 30;
-   ```
+1. **Missing Columns in SELECT Statement**
 
-2. **SQL Case Conventions (Optional, but encouraged)**
+   - You must specify which columns to select, or use `*` to select all columns.
+   - The correct basic syntax:  
+     ```sql
+     SELECT column1, column2 FROM table WHERE condition;
+     ```
 
-   - Use uppercase for SQL keywords for readability, which you’ve already done.
+2. **SQL Keywords Not Properly Capitalized (Optional/Style)**
 
-3. **Semicolon (Optional, but recommended)**
+   - While not mandatory, capitalizing SQL keywords improves readability.
 
-   - It's generally good practice to end SQL statements with a semicolon.
+---
 
-### Final Improved Query Example
+### Corrected Query
+
+If you want to select *all* columns for customers with `CustomerID > 30`:
+
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
-or, with specific columns:
+
+Or, if you want specific columns (for clarity):
+
 ```sql
-SELECT CustomerID, CustomerName FROM Customer WHERE CustomerID > 30;
+SELECT CustomerID, FirstName, LastName FROM Customer WHERE CustomerID > 30;
 ```
 
-**Summary:**  
-- Always specify columns in the `SELECT` statement.
-- Close your statement with a semicolon.
-- Consider listing only the columns you need for performance and clarity.
+---
 
-Let me know if you need further adjustments or have additional context!
+### Suggestions
+
+- Always specify what you want to select.
+- Follow SQL best practices for readability (capitalizing keywords).
+- Consider explicitly naming columns instead of using `*` for better maintainability.
+
+---
+
+**Summary:**  
+Your current query is missing the column specification in the `SELECT` clause, which will result in a syntax error (in most SQL dialects). Adjust as shown above for proper function.
