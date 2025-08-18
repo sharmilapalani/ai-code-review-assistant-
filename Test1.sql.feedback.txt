@@ -1,22 +1,23 @@
-1. Corrected Code  
-✅ Your code is correct. No syntax errors found.
+1. Corrected Code
+```sql
+SELECT * FROM Customer WHERE CustomerID > 30;
+```
+(The code is already correct.)
 
-2. Syntax Errors  
+2. Syntax Errors
 ✅ No syntax errors found.
 
 3. Suggestions / Improvements
 
-- **Explicit Columns**: Instead of using `SELECT *`, it is generally a best practice to explicitly specify the columns you need (e.g., `SELECT CustomerID, CustomerName FROM Customer`). This enhances readability and reduces the load on the database if the table has many columns.
-- **Index Usage**: Ensure that there is an index on the `CustomerID` column to optimize the performance of the `WHERE CustomerID > 30` condition.
-- **Semicolon Usage**: While the trailing semicolon is not strictly necessary in all SQL dialects, it is a good habit as it helps when you have multiple queries.
-- **Consistency**: Maintain consistent capitalization for SQL keywords and identifiers according to your project's style guide.
+- **Explicit Columns:** Instead of using `SELECT *`, specify the columns needed. This improves readability, performance (as unnecessary columns aren't fetched), and helps maintain backward compatibility if the schema changes.
+    ```sql
+    SELECT CustomerID, CustomerName, ... FROM Customer WHERE CustomerID > 30;
+    ```
+- **Indexing:** Ensure that `CustomerID` is indexed (ideally, it is a primary key) for better performance on the `WHERE` clause.
+- **Semicolon:** Including the semicolon is good SQL practice, especially if the script contains multiple statements.
 
-Example following best practices:
+**Summary:**  
+✅ Your code is correct. No syntax errors found.
 
-```sql
-SELECT CustomerID, CustomerName
-FROM Customer
-WHERE CustomerID > 30;
-```
-
-If you have specific columns you want to retrieve, it's better to list them explicitly. If you truly need all columns, your original query is fine.
+**Optional Best Practice:**  
+Avoid `SELECT *` in production code—select only the columns you need.
