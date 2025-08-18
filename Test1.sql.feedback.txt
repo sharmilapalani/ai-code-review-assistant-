@@ -1,32 +1,37 @@
-Here's a review of your SQL statement:
+Certainly! Here’s your code:
 
-### Original Code
 ```sql
 select from Customer where CustomerID>30
 ```
 
-### Issues
+### Review
 
-1. **Missing SELECT columns**:  
-   The statement does not specify what columns to select. In SQL, you must either specify the column names or use `*` to select all columns.
-
-2. **Optional but recommended:**  
-   SQL keywords are often in uppercase for readability (`SELECT`, `FROM`, etc.).
-
-### Corrected Version
-
-To select all columns:
+#### 1. **Syntax Error**
+The `SELECT` statement is incomplete—you must specify which columns to retrieve (e.g., `SELECT *`, or `SELECT CustomerID, Name`, etc.).  
+**Correct syntax:**
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
-
-Or, to select specific columns (e.g., `CustomerID`, `Name`):
+or, for specific columns:
 ```sql
 SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;
 ```
 
+#### 2. **Capitalization (Optional for SQL)**
+While SQL is case-insensitive, using uppercase for SQL keywords (`SELECT`, `FROM`, `WHERE`) and lowercase or PascalCase for identifiers (`Customer`, `CustomerID`) improves readability and follows convention.
+
+#### 3. **Semicolon**
+Ending SQL commands with a semicolon (`;`) is good practice, especially when running multiple commands.
+
 ---
 
-**Summary:**  
-- Always specify columns after `SELECT` (or use `*` for all columns).  
-- Capitalize SQL keywords for standard convention.
+**Summary of issues:**  
+- You must specify columns to select.
+- Consider best practices for capitalization and semicolons.
+
+**Final corrected query:**
+```sql
+SELECT * FROM Customer WHERE CustomerID > 30;
+```
+
+Let me know if you need a more advanced review or want to parameterize the query!
