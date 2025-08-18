@@ -1,0 +1,1 @@
+select from Customer where CustomerID>30

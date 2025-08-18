@@ -1,0 +1,29 @@
+Here’s a review of your SQL query:
+
+**Your code:**
+```sql
+select from Customer where CustomerID>30
+```
+
+**Issues & Improvements:**
+
+1. **Missing column list in SELECT:**  
+   SQL requires you to specify the columns you want to retrieve after `SELECT`. If you want all columns, use `*`. For specific columns, list them, e.g., `SELECT CustomerID, Name`.
+
+2. **Corrected Query:**
+   ```sql
+   SELECT * FROM Customer WHERE CustomerID > 30;
+   ```
+   Or, for example:
+   ```sql
+   SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;
+   ```
+
+3. **Code Style:**  
+   - Use uppercase for SQL keywords for readability.
+   - End statements with a semicolon (optional for some environments, but recommended).
+
+**Summary:**  
+You need to specify the columns you wish to select. Otherwise, this will raise a syntax error. 
+
+Let me know if you want suggestions for querying/filtering/sorting, or want performance tips!
