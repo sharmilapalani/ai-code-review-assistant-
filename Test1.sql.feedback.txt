@@ -1,37 +1,35 @@
-Certainly! Here’s your code:
+Here’s a review of your SQL code:
 
+**Original code:**
 ```sql
-select from Customer where CustomerID>30
+select from Customer where CustomerID > 30
 ```
 
-### Review
+**Issues Identified:**
 
-#### 1. **Syntax Error**
-The `SELECT` statement is incomplete—you must specify which columns to retrieve (e.g., `SELECT *`, or `SELECT CustomerID, Name`, etc.).  
-**Correct syntax:**
+1. **Syntax Error:**  
+   The `SELECT` statement requires you to specify the columns you want to retrieve.  
+   - `SELECT *` for all columns  
+   - `SELECT CustomerID, CustomerName`, etc. for specific columns
+
+2. **No Semicolon:**  
+   While not strictly required in all SQL clients, it's good practice to terminate statements with a semicolon.
+
+**Corrected code (retrieve all columns):**
 ```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
-```
-or, for specific columns:
-```sql
-SELECT CustomerID, Name FROM Customer WHERE CustomerID > 30;
-```
-
-#### 2. **Capitalization (Optional for SQL)**
-While SQL is case-insensitive, using uppercase for SQL keywords (`SELECT`, `FROM`, `WHERE`) and lowercase or PascalCase for identifiers (`Customer`, `CustomerID`) improves readability and follows convention.
-
-#### 3. **Semicolon**
-Ending SQL commands with a semicolon (`;`) is good practice, especially when running multiple commands.
-
----
-
-**Summary of issues:**  
-- You must specify columns to select.
-- Consider best practices for capitalization and semicolons.
-
-**Final corrected query:**
-```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
+SELECT *
+FROM Customer
+WHERE CustomerID > 30;
 ```
 
-Let me know if you need a more advanced review or want to parameterize the query!
+**Suggestions:**
+
+- If you only need some columns, enumerate them for performance and clarity:
+    ```sql
+    SELECT CustomerID, CustomerName
+    FROM Customer
+    WHERE CustomerID > 30;
+    ```
+- Add `ORDER BY` if you want sorted results.
+
+Let me know if you need more advanced feedback or additional context!
