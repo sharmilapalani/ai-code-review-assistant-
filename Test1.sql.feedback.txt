@@ -10,13 +10,20 @@ SELECT * FROM Customer WHERE CustomerID > 10;
 
 3. Suggestions / Improvements
 
-- Use consistent casing for SQL keywords (e.g., `SELECT`, `FROM`, `WHERE`) for readability. Your original code is fine in this regard.
-- Consider selecting only required columns instead of `*` for better performance and clarity, unless all columns are specifically needed.
-- Ensure you use the correct column name. SQL is case-insensitive for column and table names in most RDBMS, but consistency is good practice.
-- Always end SQL statements with a semicolon as you have.
+- Avoid using `SELECT *` in production; explicitly specify column names for clarity and performance, e.g., `SELECT CustomerID, Name, ...`.
+- Ensure consistent naming conventions (e.g., `CustomerID` vs `CustomerId`). Confirm column name case with your DBMS since some (e.g., PostgreSQL) are case-sensitive.
+- Add an `ORDER BY` clause if a specific order is required (e.g., `ORDER BY CustomerID`).
 
 4. Requirement Mismatch
 
-- **Mismatch identified:** The requirement specifies displaying customer details where `CustomerId > 10`. Your query used `CustomerID > 30`, which does not satisfy the condition.
-- **Fix:** Change `CustomerID > 30` to `CustomerID > 10`.
-- **Conclusion:** The uploaded code does **not** fully satisfy the requirement. Use the corrected code above.
+**Mismatch Found:**  
+The requirement is to display customer details for `CustomerId > 10`.  
+**Uploaded Query:**  
+```sql
+SELECT * FROM Customer WHERE CustomerID > 30;
+```
+- The uploaded code incorrectly uses `> 30` instead of `> 10` as specified.
+
+**Correction:**  
+Change `CustomerID > 30` to `CustomerID > 10` as shown in the corrected code above.  
+**Conclusion:** The uploaded query does **not** fully satisfy the requirement.
