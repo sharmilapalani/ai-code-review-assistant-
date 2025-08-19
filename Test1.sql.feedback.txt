@@ -1,24 +1,27 @@
 1. Corrected Code  
-```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
-```
-✅ No changes required; the code is syntactically correct.
+✅ The code is syntactically correct. No changes needed.
 
 2. Syntax Errors  
 ✅ No syntax errors found.
 
 3. Suggestions / Improvements  
 
-- **Explicit Column Selection:** It's best practice to avoid `SELECT *`; specify the required columns to improve performance and readability. For example:
-  ```sql
-  SELECT CustomerID, CustomerName, Address -- etc.
-  FROM Customer
-  WHERE CustomerID > 30;
-  ```
-- **Indexing:** Ensure that an index exists on the `CustomerID` column for better query performance, especially on large tables.
-- **Semicolon Usage:** The semicolon at the end is good practice for statement termination in SQL.
-- **Consistency in Naming:** Ensure your table and column names use consistent case and naming conventions throughout your project.
-- **Commenting:** Adding comments describing the purpose of the query can aid maintenance.
+- Explicit Columns: Instead of using SELECT *, list out the specific columns you need (e.g., SELECT CustomerID, CustomerName FROM Customer ...). This is best practice for both performance and maintainability, especially in production environments.
+- Table Naming: Ensure naming conventions are followed (singular vs plural table names). "Customer" is fine, but consistency is key.
+- Indexing: If queries will frequently filter by CustomerID, ensure an index exists on that column for performance.
+- Formatting: For readability, you may want to format SQL keywords in uppercase (which you have done) and maintain consistent indentation.
+
+    Example:
+    ```sql
+    SELECT CustomerID, CustomerName
+    FROM Customer
+    WHERE CustomerID > 30;
+    ```
 
 4. Requirement Mismatch  
-- **No feature/description was provided,** so I cannot confirm if the code fully meets a specific requirement. Please provide additional context or requirements if you'd like a more thorough check for functional correctness.
+There was no feature/description provided.
+- If you intend to filter customers with IDs greater than 30, the code matches the (implied) requirement.
+- If the requirement was different, please provide more details.
+
+**Summary:**  
+Your SQL statement is correct and functional, but for large-scale or production use, avoid SELECT * and specify columns explicitly. Otherwise, the code performs as expected given the lack of further requirements.
