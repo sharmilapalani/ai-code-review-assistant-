@@ -10,20 +10,19 @@ SELECT * FROM Customer WHERE CustomerID > 10;
 
 3. Suggestions / Improvements
 
-- Avoid using `SELECT *` in production; explicitly specify column names for clarity and performance, e.g., `SELECT CustomerID, Name, ...`.
-- Ensure consistent naming conventions (e.g., `CustomerID` vs `CustomerId`). Confirm column name case with your DBMS since some (e.g., PostgreSQL) are case-sensitive.
-- Add an `ORDER BY` clause if a specific order is required (e.g., `ORDER BY CustomerID`).
+- Be consistent with column naming (use either CustomerID or CustomerId, matching the actual schema).
+- Prefer listing column names explicitly (e.g., `SELECT CustomerID, Name, ...`) instead of `*` for better clarity and maintainability.
+- Use proper formatting and capitalization for readability:
+  - Keywords in uppercase: `SELECT`, `FROM`, `WHERE`.
+  - Table and column names as per schema standards/casing.
 
 4. Requirement Mismatch
 
-**Mismatch Found:**  
-The requirement is to display customer details for `CustomerId > 10`.  
-**Uploaded Query:**  
-```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
-```
-- The uploaded code incorrectly uses `> 30` instead of `> 10` as specified.
+**Mismatch Identified:**  
+The uploaded code filters customers where `CustomerID > 30`, while the requirement specifies `CustomerId > 10`. Thus, the logic does NOT match the description, as it excludes valid records (e.g., CustomerID 11–30).
 
-**Correction:**  
-Change `CustomerID > 30` to `CustomerID > 10` as shown in the corrected code above.  
-**Conclusion:** The uploaded query does **not** fully satisfy the requirement.
+**Correction Provided:**  
+Change the filter from `CustomerID > 30` to `CustomerID > 10` as shown in the corrected code.
+
+**Summary:**  
+The requirement is NOT satisfied. Please update the query to use `CustomerID > 10` per the instructions.
