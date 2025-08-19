@@ -1,7 +1,7 @@
 # Code Review Feedback for `Test1.sql`
 
 ## Description
-Select the Student Details from Student Table where name Starts with A
+Select all the Student Details where the Name Starts with A
 
 ## Uploaded Code
 ```sql
@@ -13,48 +13,33 @@ SELECT * FROM Customer WHERE CustomerID > 30;
 1. Corrected Code
 
 ```sql
-SELECT * FROM Student WHERE name LIKE 'A%';
+SELECT * FROM Student WHERE Name LIKE 'A%';
 ```
-
----
 
 2. Syntax Errors
 
-✅ No syntax errors found in the uploaded code.
-
----
+✅ No syntax errors found in the submitted code.
 
 3. Suggestions / Improvements
 
-- It is best practice to explicitly specify the columns needed rather than using `*`, e.g., `SELECT StudentID, name, ...`.
-- Use meaningful and consistent column and table names. The uploaded code uses `Customer` and `CustomerID`, which do not match the described requirement.
-- For performance: If the `name` column is not indexed and the table is large, consider indexing it if such queries are frequent.
-
----
+- **Table Name:** Use the correct table (`Student`) instead of `Customer`, as per the requirement.
+- **Filter Logic:** Use a `LIKE 'A%'` filter on the `Name` column to get names starting with ‘A’, as requested, instead of filtering by `CustomerID`.
+- **Readability:** Consider specifying column names instead of `SELECT *` for better performance and maintainability.
+- **SQL Semicolon:** Optional, but using semicolon at the end of SQL statement is standard practice (already present in the submission).
 
 4. Requirement Mismatch
 
-**Requirement:**  
-Select the Student Details from Student Table where name Starts with A.
+**Mismatch Identified:**  
+The provided code selects records from the `Customer` table where `CustomerID > 30`. The requirement is to select all student details from the `Student` table where the `Name` starts with 'A'.
 
-**Uploaded Code:**  
+**Correction:**  
+Your code does **not** meet the requirement. Please use:
+
 ```sql
-SELECT * FROM Customer WHERE CustomerID > 30;
+SELECT * FROM Student WHERE Name LIKE 'A%';
 ```
 
-**Analysis:**  
-- The code selects all columns from the `Customer` table, not the `Student` table.  
-- It filters by `CustomerID > 30`, which has no relation to filtering students whose names start with 'A'.  
-- It does not match the requirement at all.
-
-**Correct Query:**  
-```sql
-SELECT * FROM Student WHERE name LIKE 'A%';
-```
-
-**Conclusion:**  
-❌ The uploaded code does NOT satisfy the requirement.  
-Refer to the "Corrected Code" section above for the appropriate query.
+This will retrieve all student records where the `Name` begins with 'A', satisfying the stated requirement.
 
 ## Git Blame Info
 ```
