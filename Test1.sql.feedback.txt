@@ -1,22 +1,24 @@
 1. Corrected Code  
-✅ No changes required. The code is already correct.
-
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
+✅ No changes required; the code is syntactically correct.
 
 2. Syntax Errors  
 ✅ No syntax errors found.
 
-3. Suggestions / Improvements
-- **Explicit Column Selection**: Instead of using `SELECT *`, it's good practice to specify only the columns you need (e.g., `SELECT CustomerID, Name FROM Customer`). This improves performance and clarity, especially as your table grows or changes.
-- **Indexing**: Make sure that `CustomerID` is indexed for optimal filter performance, though this is usually the case if it's a primary key.
-- **Semicolon Usage**: Your use of a semicolon to terminate the statement is good for clarity and compatibility, especially in multi-statement scripts.
-- **Readability**: Add a comment if the query is for a specific purpose to clarify intent for future readers.
+3. Suggestions / Improvements  
 
-**Example with specified columns:**
-```sql
-SELECT CustomerID, Name, Email FROM Customer WHERE CustomerID > 30;
-```
+- **Explicit Column Selection:** It's best practice to avoid `SELECT *`; specify the required columns to improve performance and readability. For example:
+  ```sql
+  SELECT CustomerID, CustomerName, Address -- etc.
+  FROM Customer
+  WHERE CustomerID > 30;
+  ```
+- **Indexing:** Ensure that an index exists on the `CustomerID` column for better query performance, especially on large tables.
+- **Semicolon Usage:** The semicolon at the end is good practice for statement termination in SQL.
+- **Consistency in Naming:** Ensure your table and column names use consistent case and naming conventions throughout your project.
+- **Commenting:** Adding comments describing the purpose of the query can aid maintenance.
 
-If you have a particular context or question in mind, please provide more details!
+4. Requirement Mismatch  
+- **No feature/description was provided,** so I cannot confirm if the code fully meets a specific requirement. Please provide additional context or requirements if you'd like a more thorough check for functional correctness.
