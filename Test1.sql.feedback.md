@@ -1,7 +1,7 @@
 # Code Review Feedback for `Test1.sql`
 
 ## Description
-Select all the Student Details where the Name Starts with A
+Select all the Employees where the Salary between 20000 and 50000
 
 ## Uploaded Code
 ```sql
@@ -13,33 +13,40 @@ SELECT * FROM Customer WHERE CustomerID > 30;
 1. Corrected Code
 
 ```sql
-SELECT * FROM Student WHERE Name LIKE 'A%';
+SELECT * FROM Employees WHERE Salary BETWEEN 20000 AND 50000;
 ```
 
 2. Syntax Errors
 
-✅ No syntax errors found in the submitted code.
+✅ No syntax errors found.
 
 3. Suggestions / Improvements
 
-- **Table Name:** Use the correct table (`Student`) instead of `Customer`, as per the requirement.
-- **Filter Logic:** Use a `LIKE 'A%'` filter on the `Name` column to get names starting with ‘A’, as requested, instead of filtering by `CustomerID`.
-- **Readability:** Consider specifying column names instead of `SELECT *` for better performance and maintainability.
-- **SQL Semicolon:** Optional, but using semicolon at the end of SQL statement is standard practice (already present in the submission).
+- Use explicit column names instead of `SELECT *` where possible for performance and clarity.
+- Ensure the table name matches the intended entity (“Employees” as per the requirement, not “Customer”).
+- Format keywords in uppercase for readability and maintainability.
+
+Example best practice:
+
+```sql
+SELECT EmployeeID, EmployeeName, Salary
+FROM Employees
+WHERE Salary BETWEEN 20000 AND 50000;
+```
 
 4. Requirement Mismatch
 
-**Mismatch Identified:**  
-The provided code selects records from the `Customer` table where `CustomerID > 30`. The requirement is to select all student details from the `Student` table where the `Name` starts with 'A'.
+**Mismatch Explanation:**  
+- The uploaded code selects rows from the `Customer` table based on `CustomerID > 30`, which is unrelated to selecting employees or salary.
+- The requirement specifically asks to select all employees with a salary between 20,000 and 50,000, which the uploaded query does NOT address.
 
-**Correction:**  
-Your code does **not** meet the requirement. Please use:
-
+**Corrected Query:**  
 ```sql
-SELECT * FROM Student WHERE Name LIKE 'A%';
+SELECT * FROM Employees WHERE Salary BETWEEN 20000 AND 50000;
 ```
 
-This will retrieve all student records where the `Name` begins with 'A', satisfying the stated requirement.
+**Conclusion:**  
+The uploaded code does **not satisfy** the requirement. Please use the corrected query above.
 
 ## Git Blame Info
 ```
