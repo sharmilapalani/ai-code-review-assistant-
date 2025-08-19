@@ -1,28 +1,66 @@
-1. Corrected Code
+**Review of your code:**
+
+Your SQL code is syntactically correct and will retrieve all columns (`*`) from the `Customer` table where the `CustomerID` value is greater than 30.
+
+**However**, I have a few suggestions to make your code better according to SQL best practices:
+
+---
+
+### 1. Use Explicit Columns
+
+Instead of using `SELECT *`, specify the columns needed, for performance and readability.  
+For example, if you want `CustomerID`, `FirstName`, and `LastName`:
 
 ```sql
-SELECT * FROM Customer WHERE CustomerID > 10;
+SELECT CustomerID, FirstName, LastName
+FROM Customer
+WHERE CustomerID > 30;
 ```
 
-2. Syntax Errors
+---
 
-✅ No syntax errors found.
+### 2. Formatting and Clarity
 
-3. Suggestions / Improvements
+- Put each clause on a new line for readability.
+- Capitalize keywords.
 
-- Be consistent with column naming (use either CustomerID or CustomerId, matching the actual schema).
-- Prefer listing column names explicitly (e.g., `SELECT CustomerID, Name, ...`) instead of `*` for better clarity and maintainability.
-- Use proper formatting and capitalization for readability:
-  - Keywords in uppercase: `SELECT`, `FROM`, `WHERE`.
-  - Table and column names as per schema standards/casing.
+---
 
-4. Requirement Mismatch
+### 3. Table/Column Names
 
-**Mismatch Identified:**  
-The uploaded code filters customers where `CustomerID > 30`, while the requirement specifies `CustomerId > 10`. Thus, the logic does NOT match the description, as it excludes valid records (e.g., CustomerID 11–30).
+Double-check whether your table and column names match your schema.  
+If there are aliases, mention that.
 
-**Correction Provided:**  
-Change the filter from `CustomerID > 30` to `CustomerID > 10` as shown in the corrected code.
+---
 
-**Summary:**  
-The requirement is NOT satisfied. Please update the query to use `CustomerID > 10` per the instructions.
+### 4. Consistency
+
+If using SQL code in production, it's a good practice to qualify table names with the schema, e.g. `dbo.Customer` (if you are using SQL Server).
+
+---
+
+## **Corrected Code (Best Practice Version)**
+
+```sql
+SELECT CustomerID, FirstName, LastName
+FROM Customer
+WHERE CustomerID > 30;
+```
+
+**Or, if you really want all columns:**
+
+```sql
+SELECT *
+FROM Customer
+WHERE CustomerID > 30;
+```
+
+---
+
+### **Summary**
+
+- Your original code is correct.
+- It's better to specify the columns you need.
+- Use consistent formatting and double-check actual table/column names.
+
+Let me know if you have a specific requirement or if this query needs to be adapted to a specific SQL dialect!
