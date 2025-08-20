@@ -1,7 +1,7 @@
 # Code Review Feedback for `Test1.sql`
 
 ## Description
-Select all the Employees where the Salary between 20000 and 50000
+Display the Student details from Student Table name starts with M
 
 ## Uploaded Code
 ```sql
@@ -13,40 +13,41 @@ SELECT * FROM Customer WHERE CustomerID > 30;
 1. Corrected Code
 
 ```sql
-SELECT * FROM Employees WHERE Salary BETWEEN 20000 AND 50000;
+SELECT * FROM Student WHERE Name LIKE 'M%';
 ```
 
 2. Syntax Errors
 
-✅ No syntax errors found.
+✅ No syntax errors found in the uploaded code.
 
 3. Suggestions / Improvements
 
-- Use explicit column names instead of `SELECT *` where possible for performance and clarity.
-- Ensure the table name matches the intended entity (“Employees” as per the requirement, not “Customer”).
-- Format keywords in uppercase for readability and maintainability.
-
-Example best practice:
-
-```sql
-SELECT EmployeeID, EmployeeName, Salary
-FROM Employees
-WHERE Salary BETWEEN 20000 AND 50000;
-```
+- Always use table and column names that correctly reflect your data model and requirements.
+- Prefer explicit column names (e.g., `SELECT Name, Age, ...`) over `SELECT *` for better performance and readability unless all columns are truly needed.
+- When filtering text, consider case sensitivity (may depend on SQL dialect/collation).
+- Add comments to clarify query intent, especially for business-critical logic.
 
 4. Requirement Mismatch
 
-**Mismatch Explanation:**  
-- The uploaded code selects rows from the `Customer` table based on `CustomerID > 30`, which is unrelated to selecting employees or salary.
-- The requirement specifically asks to select all employees with a salary between 20,000 and 50,000, which the uploaded query does NOT address.
+**Requirement:**  
+Display the Student details from Student Table where the name starts with 'M'.
+
+**Uploaded Code:**  
+```sql
+SELECT * FROM Customer WHERE CustomerID > 30;
+```
+- **Mismatch Analysis:**  
+  - Table: Used `Customer` instead of `Student`.
+  - Filter: Used `CustomerID > 30` instead of filtering names starting with 'M'.
+  - Column: No logic to check names starting with 'M'.
+
+**Conclusion:**  
+❌ The submitted code does NOT satisfy the requirement.
 
 **Corrected Query:**  
 ```sql
-SELECT * FROM Employees WHERE Salary BETWEEN 20000 AND 50000;
+SELECT * FROM Student WHERE Name LIKE 'M%';
 ```
-
-**Conclusion:**  
-The uploaded code does **not satisfy** the requirement. Please use the corrected query above.
 
 ## Git Blame Info
 ```
