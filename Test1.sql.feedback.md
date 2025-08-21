@@ -1,7 +1,7 @@
 # Code Review Feedback for `Test1.sql`
 
 ## Description
-Display all the records from STUDENT Table where the NAME starts with A
+Display all the records from Customer Table
 
 ## Uploaded Code
 ```sql
@@ -11,40 +11,34 @@ SELECT * FROM Customer WHERE CustomerID > 30;
 
 ## AI Feedback
 1. Corrected Code
+
 ```sql
-SELECT * FROM STUDENT WHERE NAME LIKE 'A%';
+SELECT * FROM Customer;
 ```
 
 2. Syntax Errors
-✅ No syntax errors found in the uploaded code.
+
+✅ No syntax errors found.
 
 3. Suggestions / Improvements
 
-- Use meaningful table and column names as per the requirement (STUDENT, NAME).
-- The pattern-matching condition should use LIKE with the appropriate string pattern ('A%').
-- Always end SQL statements with a semicolon (good).
-- Use uppercase SQL keywords for readability (as you did—good practice).
+- Avoid using unnecessary WHERE clauses unless specified by the requirements.
+- Use `SELECT *` only when you need all columns; for production code, explicitly list columns to improve maintainability.
+- Ensure table and column names are consistently capitalized, according to your SQL style guide.
 
 4. Requirement Mismatch
 
-**Uploaded Code:**
+**Requirement:** Display all the records from Customer Table.
+
+**Uploaded Code:**  
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
-**Requirement:**  
-Display all the records from STUDENT Table where the NAME starts with A.
+- The provided code only displays records where `CustomerID > 30`.  
+- This does **not** display **all** the records from the `Customer` table.
 
-**Analysis:**  
-- The code queries from the `Customer` table, not the `STUDENT` table.
-- It filters by `CustomerID > 30`, unrelated to names starting with 'A'.
-- There is no filtering on the `NAME` column to check for names starting with 'A'.
-
-**Corrected Query:**
-```sql
-SELECT * FROM STUDENT WHERE NAME LIKE 'A%';
-```
-**Conclusion:**  
-❌ The uploaded code does **not** satisfy the requirement. Please use the corrected query above to fulfill the described task.
+**Conclusion:** The code does **not** satisfy the requirement.  
+**Correction:** Remove the `WHERE` clause as shown in the corrected code above.
 
 ## Git Blame Info
 ```
