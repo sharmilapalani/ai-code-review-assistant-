@@ -1,7 +1,7 @@
 # Code Review Feedback for `Test1.sql`
 
 ## Description
-Display the Student details from Student Table name starts with M
+Display all the records from STUDENT Table where the NAME starts with A
 
 ## Uploaded Code
 ```sql
@@ -11,43 +11,40 @@ SELECT * FROM Customer WHERE CustomerID > 30;
 
 ## AI Feedback
 1. Corrected Code
-
 ```sql
-SELECT * FROM Student WHERE Name LIKE 'M%';
+SELECT * FROM STUDENT WHERE NAME LIKE 'A%';
 ```
 
 2. Syntax Errors
-
 ✅ No syntax errors found in the uploaded code.
 
 3. Suggestions / Improvements
 
-- Always use table and column names that correctly reflect your data model and requirements.
-- Prefer explicit column names (e.g., `SELECT Name, Age, ...`) over `SELECT *` for better performance and readability unless all columns are truly needed.
-- When filtering text, consider case sensitivity (may depend on SQL dialect/collation).
-- Add comments to clarify query intent, especially for business-critical logic.
+- Use meaningful table and column names as per the requirement (STUDENT, NAME).
+- The pattern-matching condition should use LIKE with the appropriate string pattern ('A%').
+- Always end SQL statements with a semicolon (good).
+- Use uppercase SQL keywords for readability (as you did—good practice).
 
 4. Requirement Mismatch
 
-**Requirement:**  
-Display the Student details from Student Table where the name starts with 'M'.
-
-**Uploaded Code:**  
+**Uploaded Code:**
 ```sql
 SELECT * FROM Customer WHERE CustomerID > 30;
 ```
-- **Mismatch Analysis:**  
-  - Table: Used `Customer` instead of `Student`.
-  - Filter: Used `CustomerID > 30` instead of filtering names starting with 'M'.
-  - Column: No logic to check names starting with 'M'.
+**Requirement:**  
+Display all the records from STUDENT Table where the NAME starts with A.
 
-**Conclusion:**  
-❌ The submitted code does NOT satisfy the requirement.
+**Analysis:**  
+- The code queries from the `Customer` table, not the `STUDENT` table.
+- It filters by `CustomerID > 30`, unrelated to names starting with 'A'.
+- There is no filtering on the `NAME` column to check for names starting with 'A'.
 
-**Corrected Query:**  
+**Corrected Query:**
 ```sql
-SELECT * FROM Student WHERE Name LIKE 'M%';
+SELECT * FROM STUDENT WHERE NAME LIKE 'A%';
 ```
+**Conclusion:**  
+❌ The uploaded code does **not** satisfy the requirement. Please use the corrected query above to fulfill the described task.
 
 ## Git Blame Info
 ```
