@@ -2,7 +2,7 @@
 
 ## Description
 The left join between the Call table and Target table must use the following columns:
-Qtr,GEO_NUMBER,Account_Id  are keys in AIP_G_CALLS_BASE_TBL 
+TP_Quarter,GEO_NUMBER,Account_Id  are keys in AIP_G_CALLS_BASE_TBL 
 QTR_FY,ID,TERRITORY are keys in  AIP_HCP_TARGETS
 Call table is base , matching records should bring the columns in target table.
 The resulting dataset should allow accurate mapping of calls to target accounts within the same quarter and territory.
@@ -57,63 +57,76 @@ Account_Id | ID | Call_Id | STATUS_VOD__C | Call_Date | Product_Name | STAFF_ONL
 ```
 
 ## AI Feedback
-1) Corrected Code
+**1) Corrected Code**
 
-The provided SQL can be improved for clarity and best practices, especially regarding key mapping and column aliasing. Also, the join column names should match the requirement:
+The original code mostly matches the requirements, but the SELECT list includes duplicate and ambiguous columns by using both `c.*`, `t.*`, and also re-aliases some columns. This results in duplicate and potentially confusing output columns, and may create ambiguity as to which `Account_Id`, `GEO_NUMBER`, etc. is which.
 
-- For AIP_G_CALLS_BASE_TBL (aliased as c): keys are Qtr, GEO_NUMBER, Account_Id
-- For AIP_HCP_TARGETS (aliased as t): keys are QTR_FY, TERRITORY, ID
+For precision, clarity, and to prevent accidental column duplication (and to avoid confusion in analytics/BI tools), you should:
+- Select all base table fields explicitly: `c.*`
+- Only bring from Target table (`t`) those columns not already present or where an override or renaming is needed.
+- Avoid selecting both `t.*` and then individual columns renamed; instead, only select what you need from `t`.
 
-In the sample SQL, you used c.TP_Quarter = t.QTR_FY, but the description specifies c.Qtr = t.QTR_FY. If c.TP_Quarter is the same as Qtr, that's fine, otherwise, it is a mismatch.
-
-Also, your SELECT includes both t.*, as well as explicit mappings like t.QTR_FY, t.ID AS Account_Id, t.TERRITORY AS GEO_NUMBER, which are already included via t.*, potentially leading to column duplication.
-
-Below is a more robust and unambiguous version (assuming c.Qtr should be used):
-
+Suggested corrected query:
 ```sql
 SELECT 
     c.*,
-    t.QTR_FY       AS tgt_QTR_FY,
-    t.ID           AS tgt_Account_Id,
-    t.TERRITORY    AS tgt_GEO_NUMBER,
-    t.RUKOBIA_SEGMENT_IV_GSK_TELE__C AS tgt_Segment
-    -- add other target table columns explicitly as needed
+    t.QTR_FY AS target_qtr_fy,
+    t.ID AS target_account_id,
+    t.TERRITORY AS target_territory,
+    t.RUKOBIA_SEGMENT_IV_GSK_TELE__C AS segment
 FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL AS c
 LEFT JOIN AIP_FULL_COMMERCIAL.AIP_HCP_TARGETS AS t
-    ON c.Qtr        = t.QTR_FY
+    ON c.TP_Quarter = t.QTR_FY
    AND c.Account_Id = t.ID
-   AND c.GEO_NUMBER = t.TERRITORY;
+   AND c.GEO_NUMBER = t.TERRITORY
+;
 ```
-If c.TP_Quarter, not c.Qtr, is correct based on your schema, leave it as is. Otherwise, update to c.Qtr.
+Or, enumerate all columns you need, but do not use `t.*` if you are also picking/renaming individual columns from `t`.
 
-If full t.* is needed, be aware that duplicated columns can create confusing output. It's generally better to alias columns to avoid name collision.
-
-2) Syntax Errors
+**2) Syntax Errors**
 
 ✅ No syntax errors found.
 
-3) Suggestions / Improvements
+**3) Suggestions / Improvements**
 
-- **Ambiguous Columns**: Using * in SELECT may result in ambiguous or duplicate column names, which can cause confusion or errors in consumers of the dataset. Explicitly name/alias desired columns, especially those coming from the target table.
-- **Column Aliasing**: When including fields from both c and t, alias columns coming from the target table, e.g., t.ID AS tgt_Account_Id, to avoid collision with c.Account_Id.
-- **Join Columns**: Confirm that the mapping is as per requirement (i.e., c.Qtr to t.QTR_FY), not accidentally using other columns with similar names.
-- **Indexes**: For performance, ensure indexes exist on the join keys for both tables: (Qtr, GEO_NUMBER, Account_Id) on calls, (QTR_FY, TERRITORY, ID) on targets.
-- **NULL Handling**: If downstream consumers misinterpret NULLs in target columns (from unmatched left joins), consider COALESCE/tgt_Flag columns.
-- **Scalability**: If tables are large, and only a subset of target columns is needed, avoid t.*. Instead, SELECT only relevant columns to reduce data volume.
+- **Avoid `*` in SELECT**: Prefer explicit column selection for clarity, future-proofing, and to prevent surprises as schemas change or for downstream users/BI tools.
+    - Using `c.*` + `t.*` + individual `t.` columns creates duplicates (e.g., `Account_Id` appears multiple times).
+    - Use aliases for columns drawn from both tables to clearly show origin (as in the corrected code above).
+- **Column Aliasing**: Give clear, self-explanatory aliases, such as `target_account_id`, to avoid confusion when the same-named fields (e.g., `Account_Id`) exist in both tables.
+- **Indexing**: Ensure that the join keys (`TP_Quarter`, `Account_Id`, `GEO_NUMBER` for Calls and `QTR_FY`, `ID`, `TERRITORY` for Targets) are indexed on both tables for performance, particularly if the tables are large.
+- **Null handling**: If downstream usage depends on knowing whether a Call was matched to a Target or not, consider adding an indicator column, e.g.:
+    ```sql
+    CASE WHEN t.ID IS NOT NULL THEN 1 ELSE 0 END AS is_target_matched
+    ```
+- **Documentation**: Consider commenting the join and purpose to aid future maintainers.
+- **Edge Cases**: If there is any risk that keys might not be properly aligned (e.g., different data types or casing), ensure data is properly standardized (collation, data type conversion, trimming).
+- **Partition Pruning (if applicable)**: If your environment permits and your table is partitioned on join columns, structure filter conditions to allow optimal partition pruning.
 
-4) Requirement Mismatch
+**4) Requirement Mismatch**
 
-- **Join Key Mapping**: Per description, join should be on c.Qtr = t.QTR_FY; your original SQL uses c.TP_Quarter. Unless these columns are equivalent, this is a mismatch. Confirm and adjust as appropriate.
-- **Keys Used**: The join is correctly using the triple key (quarter, account, geo/territory) as described.
-- **Field Selection**: The resulting dataset produces all fields from calls and (potentially) all fields from targets. However, the SELECT t.*, plus t.ID AS Account_Id and t.TERRITORY AS GEO_NUMBER, will produce duplicate columns (ID and Account_Id, TERRITORY and GEO_NUMBER, etc.), which may not be desired.
-- **Mapping Accuracy**: Provided the join columns correctly map the quarter, territory, and account, your result set allows for accurate mapping of calls to target accounts in the same quarter and territory.
+- **Join Columns**: The code joins correctly:
+    - Joins `TP_Quarter` (calls) to `QTR_FY` (targets)
+    - Joins `Account_Id` (calls) to `ID` (targets)
+    - Joins `GEO_NUMBER` (calls) to `TERRITORY` (targets)
+- **Call Table as Base**: The base (left) table is `AIP_G_CALLS_BASE_TBL` — Correct.
+- **Brings Target Columns**: Brings all target columns via `t.*`, but this:
+    - Causes duplicate columns that are also in calls. It can result in ambiguous column names in the output.
+    - If "bring the columns in target table" means all columns: `t.*` suffices, but the SELECT should be cleaned up to avoid redundant renaming/aliasing as in your example. Otherwise, just select only the fields you need.
+- **Mapping**: The join does allow mapping of calls to targets in the same quarter and territory.
 
 **Conclusion**:  
-- If c.TP_Quarter is equivalent to c.Qtr, ✅ the SQL logic is correct.
-- If not, **update the SQL to use c.Qtr = t.QTR_FY**.
-- For best practice and consumer clarity, **alias the target columns**, avoid SELECT *, and remove duplicate column names.
+The SQL as written does satisfy the requirements for logic and joining. **However, the SELECT statement is redundant and ambiguous due to overlapping/duplicated column names and should be refactored for clarity and maintainability as shown above.** This will ensure accurate and clear mapping of calls to target accounts within the same quarter and territory, as required.
 
-**Recommendation:** Correct the join column if necessary and refine the SELECT clause per examples above for better clarity and data hygiene.
+---
+
+**Summary Table:**
+
+| Section                  | Review Result                                                                                                                    |
+|--------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| 1) Corrected Code        | Provided above. Improved SELECT for clarity.                                                                                    |
+| 2) Syntax Errors         | ✅ No syntax errors found.                                                                                                       |
+| 3) Suggestions           | Avoid `*`, use explicit columns and aliases; consider index presence; document logic; add match indicator if needed.             |
+| 4) Requirement Mismatch  | ❌ Minor: Output is ambiguous due to duplicate columns in SELECT. Logic matches requirements. Refactored SELECT for best results. |
 
 ## Git Blame
 ```
@@ -234,16 +247,16 @@ summary Code review for pasted_code.sql
 previous c3c4bd4335c2e7501b170bae9f75258ef948ecd1 pasted_code.sql
 filename pasted_code.sql
 	LEFT JOIN AIP_FULL_COMMERCIAL.AIP_HCP_TARGETS AS t
-0000000000000000000000000000000000000000 10 10 1
-author Not Committed Yet
-author-mail <not.committed.yet>
+6c4767dcb44704519db95c90df0bfa8724070a4b 10 10 1
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762794201
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762794201
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 7c31668be5645773d75dc58d648ea959c98bd1fe pasted_code.sql
 filename pasted_code.sql
 	    ON c.TP_Quarter = t.QTR_FY
