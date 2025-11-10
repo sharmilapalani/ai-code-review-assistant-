@@ -1,1 +1,1 @@
-select * from AIP_G_CALLS_BASE_TBL where tt=10;
+SELECT  * FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL where tt=10
