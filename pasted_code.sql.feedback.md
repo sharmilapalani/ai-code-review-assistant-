@@ -13,31 +13,46 @@ select * from AIP_G_CALLS_BASE_TBL where tt=10;
 
 ## AI Feedback
 1) Corrected Code  
-✅ No changes required.
+✅ No changes required.  
+The query correctly selects all records from AIP_G_CALLS_BASE_TBL where tt=10.
 
 2) Syntax Errors  
 ✅ No syntax errors found.
 
-3) Suggestions / Improvements
+3) Suggestions / Improvements  
 
-- **Performance**
-  - If you expect the `AIP_G_CALLS_BASE_TBL` table to grow large, consider creating an index on the `tt` column to speed up queries filtering by this field.
-  - Instead of `SELECT *`, explicitly specify column names to reduce network overhead and improve maintainability (e.g., `SELECT col1, col2 FROM ...`). This also prevents issues when table schemas change.
-
-- **Readability**
-  - Use uppercase for SQL keywords for better readability:  
+- **Performance:**  
+  - Using `SELECT *` can be inefficient, especially if the table has many columns or if only a subset are needed. Specify needed columns, e.g.:
     ```sql
-    SELECT * FROM AIP_G_CALLS_BASE_TBL WHERE tt = 10;
+    SELECT column1, column2 FROM AIP_G_CALLS_BASE_TBL WHERE tt = 10;
     ```
-  - Add appropriate comments describing the purpose when part of a larger query.
 
-4) Requirement Mismatch
+- **Readability:**  
+  - For clarity and maintainability, use consistent formatting:
+    ```sql
+    SELECT *
+    FROM AIP_G_CALLS_BASE_TBL
+    WHERE tt = 10;
+    ```
+  - Use uppercase for SQL keywords.
 
-- The SQL query does satisfy the requirement described: "select all the records from AIP_G_CALLS_BASE_TBL where tt=10".
-- The execution error in your summary refers to `Invalid object name 'AIP_G_CALLS_BASE_TBL'`, which is an environment/database configuration issue (table is missing or named differently in your database), not a SQL code issue.
+- **Indexes:**  
+  - If the table contains many rows and tt is frequently filtered, ensure an index exists on column tt for query performance.
 
-**Conclusion:**  
-The provided SQL code is syntactically correct and meets the stated requirement. The reported error is environmental and must be fixed outside the SQL query itself.
+- **Edge-cases:**  
+  - Ensure that tt is consistently typed (e.g., integer). If not, use appropriate casting.
+
+4) Requirement Mismatch  
+
+- The query logic fulfills the requirement ("select all the records from AIP_G_CALLS_BASE_TBL where tt=10").
+- However, **the execution error indicates that the table does not exist or the user lacks permission** (“Invalid object name 'AIP_G_CALLS_BASE_TBL'”).
+- This is a database/schema issue, not a SQL logic problem. The SQL itself is correct for the stated requirement.
+- To fully satisfy the requirement, ensure the table exists and the user has access.
+
+**Summary:**  
+- Query logic matches the requested requirement.
+- No syntax errors.
+- Table does not exist or user lacks access, which must be resolved outside of query logic.
 
 ## Git Blame
 ```
