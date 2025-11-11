@@ -1,6 +1,8 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
+there are few parameters used for dashboard interactivty pls ignore that
+
 Sample Calls  : Count distinct ID from the AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CALL = True , for selected Time period in the Dashboard , the Time period is determined by CALL_DATE_VOD__C column from the AIP_CRM_CALL_ACTVITY.
 
 HCPs Sampled by Segment :
@@ -9,308 +11,722 @@ Count of distinct ACCOUNT_VOD__C from AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CAL
 
 ## Uploaded Code
 ```sql
-Tier_dict: ((`$("Tier 1";"Tier 2";"Tier 3";"Non-ECL";"Direct Competitor Writer";"Non-Tier Targets";"Average"))!(1 2 3 5 4 6 7));
-     t:select High_impact,TERRITORY_NAME,REGION_NAME,Account_Id,Id,Presentation_ID_vod__c,Successful_Call,Call_Type_vod__c,Target_Flag,Account_Type,role,ACCT_TYP_CD_iv_GSK_CDE__c,Segment from   AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL;
-     t:$[(count t)>0;t;:t];
-         geo:`Region;
-    t:update Geography:REGION_NAME,Parent_Geo:`NATION from t;
-    role:(exec first role from t);
-    if[role in `reg;  geo:`Territory; t:update Geography:TERRITORY_NAME,Parent_Geo:REGION_NAME from t];
-    if[role in `ter;  geo:`Territory; t:update Geography:TERRITORY_NAME,Parent_Geo:TERRITORY_NAME from t];
-    tb:t;
-            t:select Impact_Calls:count distinct Id by Geography:Parent_Geo,Segment from tb where  Call_Type_vod__c like "*Detail*",Account_Type like "HCP",High_impact=1;
-t:t uj select Impact_Calls:count distinct Id by Geography,Segment from tb where  Call_Type_vod__c like "*Detail*",Account_Type like "HCP",High_impact=1;
-t:update new_tier:Tier_dict Segment from t;
-t:`new_tier xasc select from t;
-t:delete new_tier from t;
-t:(geo,`$("Segment";"Calls")) xcol t;
-t:![t;();0b;{x!(^;0j;)each x}(exec c from meta t where t="j")];
+-- // {{CDL_FA_TPC}}
+-- // {{CDL_FA_STARTDATE}}
+-- // {{CDL_FA_ENDDATE}}
+-- // {{CDL_CD_P_STARTDATE_HIDDEN}}
+-- // {{CDL_FA_PROD}}
+-- // {{CDL_FA_REG}}
+-- // {{CDL_FA_TERR}}
+-- // {{CDL_FA_TEAM}}
+-- // {{CDL_FA_SEG}}
+ 
+ 
+WITH base AS (
+    SELECT
+        Segment, 
+        COUNT(DISTINCT ID) AS sample_calls,
+        COUNT(DISTINCT Account_Id) AS prescribers_sampled
+    FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
+    WHERE IS_SAMPLE_CALL = 'True' 
+--        AND 
+--        ({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}})
+--        OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}})
+--        AND
+--?        ,(Product_Name = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
+--?        ,(REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
+--?        ,(TERRITORY_NAME= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
+--?        ,(Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
+--?        ,(Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
+    GROUP BY Segment
+)
+ 
+SELECT 
+    Segment,
+    '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
+    sample_calls AS [Calls / Prescriber]
+FROM base
+ 
+UNION ALL
+ 
+SELECT 
+    Segment,
+    'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
+    prescribers_sampled AS [Calls / Prescriber]
+FROM base;
 ```
 
 ## CDL Execution Summary
-⚠️ Execution error: ('42000', "[42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Parse error at line: 1, column: 14: Incorrect syntax near '`'. (103010) (SQLExecDirectW)")
+✅ Execution succeeded. Sample rows:
+Segment | #Sample Calls / Prescribers Sampled | Calls / Prescriber
+--------|-------------------------------------|-------------------
+Tier 3 | #Sample Calls | 1204
+Direct Competitor Writer | #Sample Calls | 8
+Non-ECL | #Sample Calls | 3469
+Non-Tier Targets | #Sample Calls | 845
+Tier 2 | #Sample Calls | 444
+Tier 3 | Prescribers Sampled | 290
+Tier 1 | #Sample Calls | 388
+Non-ECL | Prescribers Sampled | 1001
+Non-Tier Targets | Prescribers Sampled | 266
+Tier 2 | Prescribers Sampled | 87
+...plus 2 more rows (sample truncated).
+
+## Sample Rows
+```
+Segment | #Sample Calls / Prescribers Sampled | Calls / Prescriber
+--------|-------------------------------------|-------------------
+Tier 3 | #Sample Calls | 1204
+Direct Competitor Writer | #Sample Calls | 8
+Non-ECL | #Sample Calls | 3469
+Non-Tier Targets | #Sample Calls | 845
+Tier 2 | #Sample Calls | 444
+Tier 3 | Prescribers Sampled | 290
+Tier 1 | #Sample Calls | 388
+Non-ECL | Prescribers Sampled | 1001
+Non-Tier Targets | Prescribers Sampled | 266
+Tier 2 | Prescribers Sampled | 87
+...plus 2 more rows (sample truncated).
+```
 
 ## AI Feedback
-**1) Corrected Code**
+1) Corrected Code
 
-❌ The pasted code is mostly kdb+/q syntax, not standard SQL. The requirement is to count distinct IDs and distinct ACCOUNT_VOD__C joining to a segment column. The original code is not syntactically valid for the described SQL task, nor for SQL Server.
+The provided SQL has issues matching the requirements:
 
-Here's a corrected version using standard SQL (SQL Server dialect assumed):
+- The main source table in the requirements is AIP_CRM_CALL_ACTVITY, but the SQL uses AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL.
+- SEGMENT is required from AIP_CRM_TARGET_LIST, joined via ACCOUNT_VOD__C. (SEGMENT is referenced as ‘Segment’ in the SQL, but the join is not visible.)
+- The filters on CALL_DATE and IS_SAMPLE_CALL should be based on the columns as named in the description.
+- The requirements are for two independent metrics: one for Sample Calls (COUNT DISTINCT ID) and one for HCPs Sampled by Segment (COUNT DISTINCT ACCOUNT_VOD__C BY SEGMENT).
 
-**Sample Calls Query:**
+Corrected SQL to precisely reflect the requirements:
+
 ```sql
-SELECT COUNT(DISTINCT Id) AS Sample_Calls
+-- Assumptions:
+-- - Parameters are injected or handled by dashboard (CALL_DATE_VOD__C range)
+-- - Boolean values stored as TRUE (not 'True') in IS_SAMPLE_CALL
+-- - Replace placeholder {start_date}, {end_date} with actual dashboard parameter bindings
+
+-- Sample Calls: COUNT DISTINCT ID
+SELECT 
+    'All' AS Segment,
+    '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
+    COUNT(DISTINCT ID) AS [Calls / Prescriber]
 FROM AIP_CRM_CALL_ACTVITY
-WHERE IS_SAMPLE_CALL = 1
-  AND CALL_DATE_VOD__C BETWEEN @StartDate AND @EndDate
+WHERE IS_SAMPLE_CALL = TRUE
+  AND CALL_DATE_VOD__C BETWEEN {start_date} AND {end_date}
+
+UNION ALL
+
+-- HCPs Sampled by Segment: COUNT DISTINCT ACCOUNT_VOD__C BY SEGMENT
+SELECT 
+    TL.SEGMENT AS Segment,
+    'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
+    COUNT(DISTINCT CA.ACCOUNT_VOD__C) AS [Calls / Prescriber]
+FROM AIP_CRM_CALL_ACTVITY CA
+JOIN AIP_CRM_TARGET_LIST TL 
+    ON CA.ACCOUNT_VOD__C = TL.ACCOUNT_VOD__C
+WHERE CA.IS_SAMPLE_CALL = TRUE
+  AND CA.CALL_DATE_VOD__C BETWEEN {start_date} AND {end_date}
+GROUP BY TL.SEGMENT
 ```
 
-**HCPs Sampled by Segment Query:**
-```sql
-SELECT
-    tl.SEGMENT,
-    COUNT(DISTINCT ca.ACCOUNT_VOD__C) AS HCPs_Sampled
-FROM AIP_CRM_CALL_ACTVITY ca
-JOIN AIP_CRM_TARGET_LIST tl
-    ON ca.ACCOUNT_VOD__C = tl.ACCOUNT_VOD__C
-WHERE ca.IS_SAMPLE_CALL = 1
-  AND ca.CALL_DATE_VOD__C BETWEEN @StartDate AND @EndDate
-GROUP BY tl.SEGMENT
-```
-Replace `@StartDate` and `@EndDate` with your dashboard's selected time period.
+**Key Corrections:**
+- Use the correct tables/column names per requirement.
+- Explicitly join the TARGET_LIST table for SEGMENT.
+- Compute overall sample calls as one line, HCPs sampled grouped by segment.
 
 ---
 
-**2) Syntax Errors**
+2) Syntax Errors
 
-❌ The provided code has **major syntax errors**:
-
-- Use of backticks (\`) and q/kdb+ conventions (e.g., uj, xcol, xasc, xcross, exec, each, first, update, select ...) which are not valid in SQL Server or standard SQL.
-- Assignment/variable usage (`role:`, `t:`) is not SQL syntax.
-- `Tier_dict` appears to be a vector definition, not a table or query.
-- Inline conditional logic (`if[...]`) is not valid in SQL; SQL uses `CASE` or procedural T-SQL blocks.
-- Execution error confirms a parse error near backtick.
+- ✅ No syntax errors found in the original SQL for its own structure, but see above for logic/semantic issues.
 
 ---
 
-**3) Suggestions / Improvements**
+3) Suggestions / Improvements
 
-- **Parameterization:** Use dashboard/control parameters for the time window, e.g., `@StartDate`, `@EndDate`.
-- **Indexing:** Ensure indexes exist on `CALL_DATE_VOD__C`, `IS_SAMPLE_CALL`, and join columns (`ACCOUNT_VOD__C`). This will dramatically improve query performance.
-- **Join Type:** If not all calls have a corresponding target list, consider a `LEFT JOIN` and handle NULL segments, if that matters to requirements.
-- **Data Types:** Confirm that `IS_SAMPLE_CALL` is of Boolean/integer type (`1`/`0`). If string-based (`'True'`), adjust accordingly.
-- **NULL handling:** Be aware that missing `ACCOUNT_VOD__C` in either table can impact counts. If required, exclude NULLs with `AND ACCOUNT_VOD__C IS NOT NULL`.
-- **Readability:** Use clear table aliases (`ca`, `tl`) and adopt conventional naming.
-- **Edge-case:** If multiple segments per account, grouping logic may need refinement.
-
----
-
-**4) Requirement Mismatch**
-
-❌ The SQL DOES NOT satisfy the Description.
-
-- The code is not valid SQL and cannot run on a SQL Server or standard SQL engine.
-- The queries required are:  
-  - Count distinct `Id` in `AIP_CRM_CALL_ACTVITY` for sample calls during user-selected period.
-  - Count distinct `ACCOUNT_VOD__C` in `AIP_CRM_CALL_ACTVITY` for sample calls during user-selected period, joined to `AIP_CRM_TARGET_LIST` for segmentation.
-
-**You must rewrite using correct SQL syntax and join logic as per the descriptive requirement. See corrected code above.**
+- **Source Table Consistency:** Use the correct table as per business logic (AIP_CRM_CALL_ACTVITY, not a summary/mart unless validated).
+- **Explicit Join for Segment:** Segment is derived from target list, not the base call table.
+- **Parameterization:** Use parameter binding for time window, not SQL comments.
+- **Column Typing:** If IS_SAMPLE_CALL is boolean, use IS_SAMPLE_CALL = TRUE (not 'True'), otherwise stick with string literal if the datatype is text (i.e., 'True').
+- **Indexing:** Make sure there are indexes on IS_SAMPLE_CALL, CALL_DATE_VOD__C, ACCOUNT_VOD__C; and TL.ACCOUNT_VOD__C for join performance.
+- **Readability:** Use meaningful column aliases and structure for clarity.
+- **Edge Cases:** Ensure all sampled accounts in CA actually exist in TL. Will any be missing? LEFT JOIN if needed, but requirements indicate only those present in the target list.
+- **Dashboard Filtering:** Comments indicate possible dashboard parameters on region, territory, etc. Add those as needed for further filtering.
 
 ---
 
-**Summary:**  
-- MAJOR syntax mismatch (written in kdb+/q, not SQL).
-- Logic not implemented as per requirement.
-- See corrected SQL provided and follow suggestions for performance and edge-case handling.
+4) Requirement Mismatch
+
+- ❌ The provided SQL does **not** fully satisfy the Description:
+    - It uses a different, possibly pre-aggregated/table (AIP_G_CALLS_BASE_TBL) not referenced in the requirements.
+    - Does **not** join AIP_CRM_TARGET_LIST to derive SEGMENT for accounts, which is required.
+    - Uses generic columns (Segment, Account_Id) instead of explicit mapping to underlying business table/column names.
+    - Lumps both metrics into a single CTE, splitting only on the second SELECT, instead of separating out “Sample Calls” as a total distinct count and “HCP Sampled by Segment” as a grouped count.
+    - Does not clearly allow "Sample Calls" overall (without segment), only by segment.
+
+**Conclusion:** The provided SQL does not implement the business requirements as described. Use the corrected code above as a template and ensure source tables/column names and joins are consistent with requirements.
 
 ## Git Blame
 ```
-0000000000000000000000000000000000000000 1 1 16
+0000000000000000000000000000000000000000 1 1 43
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	Tier_dict: ((`$("Tier 1";"Tier 2";"Tier 3";"Non-ECL";"Direct Competitor Writer";"Non-Tier Targets";"Average"))!(1 2 3 5 4 6 7));
+	-- // {{CDL_FA_TPC}}
 0000000000000000000000000000000000000000 2 2
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	     t:select High_impact,TERRITORY_NAME,REGION_NAME,Account_Id,Id,Presentation_ID_vod__c,Successful_Call,Call_Type_vod__c,Target_Flag,Account_Type,role,ACCT_TYP_CD_iv_GSK_CDE__c,Segment from   AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL;
+	-- // {{CDL_FA_STARTDATE}}
 0000000000000000000000000000000000000000 3 3
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	     t:$[(count t)>0;t;:t];
+	-- // {{CDL_FA_ENDDATE}}
 0000000000000000000000000000000000000000 4 4
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	         geo:`Region;
+	-- // {{CDL_CD_P_STARTDATE_HIDDEN}}
 0000000000000000000000000000000000000000 5 5
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	    t:update Geography:REGION_NAME,Parent_Geo:`NATION from t;
+	-- // {{CDL_FA_PROD}}
 0000000000000000000000000000000000000000 6 6
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	    role:(exec first role from t);
+	-- // {{CDL_FA_REG}}
 0000000000000000000000000000000000000000 7 7
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	    if[role in `reg;  geo:`Territory; t:update Geography:TERRITORY_NAME,Parent_Geo:REGION_NAME from t];
+	-- // {{CDL_FA_TERR}}
 0000000000000000000000000000000000000000 8 8
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	    if[role in `ter;  geo:`Territory; t:update Geography:TERRITORY_NAME,Parent_Geo:TERRITORY_NAME from t];
+	-- // {{CDL_FA_TEAM}}
 0000000000000000000000000000000000000000 9 9
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	    tb:t;
+	-- // {{CDL_FA_SEG}}
 0000000000000000000000000000000000000000 10 10
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	            t:select Impact_Calls:count distinct Id by Geography:Parent_Geo,Segment from tb where  Call_Type_vod__c like "*Detail*",Account_Type like "HCP",High_impact=1;
+	 
 0000000000000000000000000000000000000000 11 11
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	t:t uj select Impact_Calls:count distinct Id by Geography,Segment from tb where  Call_Type_vod__c like "*Detail*",Account_Type like "HCP",High_impact=1;
+	 
 0000000000000000000000000000000000000000 12 12
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	t:update new_tier:Tier_dict Segment from t;
+	WITH base AS (
 0000000000000000000000000000000000000000 13 13
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	t:`new_tier xasc select from t;
+	    SELECT
 0000000000000000000000000000000000000000 14 14
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	t:delete new_tier from t;
+	        Segment, 
 0000000000000000000000000000000000000000 15 15
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	t:(geo,`$("Segment";"Calls")) xcol t;
+	        COUNT(DISTINCT ID) AS sample_calls,
 0000000000000000000000000000000000000000 16 16
 author Not Committed Yet
 author-mail <not.committed.yet>
-author-time 1762847747
+author-time 1762848046
 author-tz +0530
 committer Not Committed Yet
 committer-mail <not.committed.yet>
-committer-time 1762847747
+committer-time 1762848046
 committer-tz +0530
 summary Version of pasted_code.sql from pasted_code.sql
-previous 06baf42e8e942ea71286faaccf42837f97f91008 pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
-	t:![t;();0b;{x!(^;0j;)each x}(exec c from meta t where t="j")];
+	        COUNT(DISTINCT Account_Id) AS prescribers_sampled
+0000000000000000000000000000000000000000 17 17
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
+0000000000000000000000000000000000000000 18 18
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    WHERE IS_SAMPLE_CALL = 'True' 
+0000000000000000000000000000000000000000 19 19
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--        AND 
+0000000000000000000000000000000000000000 20 20
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--        ({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}})
+0000000000000000000000000000000000000000 21 21
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--        OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}})
+0000000000000000000000000000000000000000 22 22
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--        AND
+0000000000000000000000000000000000000000 23 23
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--?        ,(Product_Name = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
+0000000000000000000000000000000000000000 24 24
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--?        ,(REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
+0000000000000000000000000000000000000000 25 25
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--?        ,(TERRITORY_NAME= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
+0000000000000000000000000000000000000000 26 26
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--?        ,(Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
+0000000000000000000000000000000000000000 27 27
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	--?        ,(Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
+0000000000000000000000000000000000000000 28 28
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    GROUP BY Segment
+0000000000000000000000000000000000000000 29 29
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	)
+0000000000000000000000000000000000000000 30 30
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	 
+0000000000000000000000000000000000000000 31 31
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	SELECT 
+0000000000000000000000000000000000000000 32 32
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    Segment,
+0000000000000000000000000000000000000000 33 33
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
+0000000000000000000000000000000000000000 34 34
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    sample_calls AS [Calls / Prescriber]
+0000000000000000000000000000000000000000 35 35
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	FROM base
+0000000000000000000000000000000000000000 36 36
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	 
+0000000000000000000000000000000000000000 37 37
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	UNION ALL
+0000000000000000000000000000000000000000 38 38
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	 
+0000000000000000000000000000000000000000 39 39
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	SELECT 
+0000000000000000000000000000000000000000 40 40
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    Segment,
+0000000000000000000000000000000000000000 41 41
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
+0000000000000000000000000000000000000000 42 42
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	    prescribers_sampled AS [Calls / Prescriber]
+0000000000000000000000000000000000000000 43 43
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762848046
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762848046
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
+filename pasted_code.sql
+	FROM base;
 ```
