@@ -1,7 +1,7 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
-there are few parameters used for dashboard interactivty pls ignore that
+there are few parameters used for dashboard interactivty pls ignore that, Call table and Target table is alreary joined and created as AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
 
 Sample Calls  : Count distinct ID from the AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CALL = True , for selected Time period in the Dashboard , the Time period is determined by CALL_DATE_VOD__C column from the AIP_CRM_CALL_ACTVITY.
 
@@ -92,640 +92,667 @@ Tier 2 | Prescribers Sampled | 87
 ## AI Feedback
 1) Corrected Code
 
-The provided SQL has issues matching the requirements:
+The SQL has a few important issues:
 
-- The main source table in the requirements is AIP_CRM_CALL_ACTVITY, but the SQL uses AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL.
-- SEGMENT is required from AIP_CRM_TARGET_LIST, joined via ACCOUNT_VOD__C. (SEGMENT is referenced as ‘Segment’ in the SQL, but the join is not visible.)
-- The filters on CALL_DATE and IS_SAMPLE_CALL should be based on the columns as named in the description.
-- The requirements are for two independent metrics: one for Sample Calls (COUNT DISTINCT ID) and one for HCPs Sampled by Segment (COUNT DISTINCT ACCOUNT_VOD__C BY SEGMENT).
+- The columns in the description (ID, ACCOUNT_VOD__C, SEGMENT from two tables) do not match columns in the code (ID, Account_Id, Segment from AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL).
+- The logic for "HCPs Sampled By Segment" requires a join/lookup to TARGET table for SEGMENT, but the description says this join is already present in AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL.
+- The filter on CALL_DATE_VOD__C is missing, replaced with commented pseudo template logic.
+- The filter on IS_SAMPLE_CALL incorrectly uses string 'True' instead of Boolean (unless this is correct for data), and should likely check for TRUE (or 1).
+- The filters for dashboard parameters are commented.
+- The output column naming is odd. These should use safer aliases for clarity. Use CASE to avoid union logic if desired.
 
-Corrected SQL to precisely reflect the requirements:
+Assuming all required columns exist in AIP_G_CALLS_BASE_TBL and dashboard variables are ignored (per directions), here is a corrected, readable version:
 
 ```sql
--- Assumptions:
--- - Parameters are injected or handled by dashboard (CALL_DATE_VOD__C range)
--- - Boolean values stored as TRUE (not 'True') in IS_SAMPLE_CALL
--- - Replace placeholder {start_date}, {end_date} with actual dashboard parameter bindings
-
--- Sample Calls: COUNT DISTINCT ID
-SELECT 
-    'All' AS Segment,
-    '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
-    COUNT(DISTINCT ID) AS [Calls / Prescriber]
-FROM AIP_CRM_CALL_ACTVITY
+SELECT
+    Segment,
+    COUNT(DISTINCT ID) AS Sample_Calls,
+    COUNT(DISTINCT Account_Id) AS HCPs_Sampled
+FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
 WHERE IS_SAMPLE_CALL = TRUE
-  AND CALL_DATE_VOD__C BETWEEN {start_date} AND {end_date}
+    -- AND CALL_DATE_VOD__C BETWEEN @StartDate AND @EndDate   -- Placeholder for time period if needed
+GROUP BY Segment
+ORDER BY Segment;
+```
+
+If you must have the "unioned" output for "prescribers sampled" (using column name ACCOUNT_VOD__C per your description), adjust as:
+
+```sql
+SELECT
+    Segment,
+    '#Sample Calls' AS Metric_Type,
+    COUNT(DISTINCT ID) AS Metric_Value
+FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
+WHERE IS_SAMPLE_CALL = TRUE
+GROUP BY Segment
 
 UNION ALL
 
--- HCPs Sampled by Segment: COUNT DISTINCT ACCOUNT_VOD__C BY SEGMENT
-SELECT 
-    TL.SEGMENT AS Segment,
-    'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
-    COUNT(DISTINCT CA.ACCOUNT_VOD__C) AS [Calls / Prescriber]
-FROM AIP_CRM_CALL_ACTVITY CA
-JOIN AIP_CRM_TARGET_LIST TL 
-    ON CA.ACCOUNT_VOD__C = TL.ACCOUNT_VOD__C
-WHERE CA.IS_SAMPLE_CALL = TRUE
-  AND CA.CALL_DATE_VOD__C BETWEEN {start_date} AND {end_date}
-GROUP BY TL.SEGMENT
+SELECT
+    Segment,
+    'Prescribers Sampled' AS Metric_Type,
+    COUNT(DISTINCT Account_Id) AS Metric_Value
+FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
+WHERE IS_SAMPLE_CALL = TRUE
+GROUP BY Segment
+ORDER BY Segment, Metric_Type;
 ```
 
-**Key Corrections:**
-- Use the correct tables/column names per requirement.
-- Explicitly join the TARGET_LIST table for SEGMENT.
-- Compute overall sample calls as one line, HCPs sampled grouped by segment.
+Note:
+- Replace TRUE in IS_SAMPLE_CALL = TRUE with 'True' if your database expects string values.
+- Adjust Account_Id and Segment if your underlying columns in AIP_G_CALLS_BASE_TBL are actually named ACCOUNT_VOD__C and SEGMENT, respectively.
 
----
+If the time filter is required, add it.
 
 2) Syntax Errors
 
-- ✅ No syntax errors found in the original SQL for its own structure, but see above for logic/semantic issues.
+- ✅ No syntax errors found in the provided SQL.
 
----
+But:
+- [ ] The use of [alias] square brackets is not standard SQL; use double quotes or just alias names unless your RDBMS uses brackets (MS SQL, BigQuery).
+- [ ] Comments using // are not valid SQL comment syntax (should be -- or /* */). This is likely template logic, but it is not valid SQL.
 
 3) Suggestions / Improvements
 
-- **Source Table Consistency:** Use the correct table as per business logic (AIP_CRM_CALL_ACTVITY, not a summary/mart unless validated).
-- **Explicit Join for Segment:** Segment is derived from target list, not the base call table.
-- **Parameterization:** Use parameter binding for time window, not SQL comments.
-- **Column Typing:** If IS_SAMPLE_CALL is boolean, use IS_SAMPLE_CALL = TRUE (not 'True'), otherwise stick with string literal if the datatype is text (i.e., 'True').
-- **Indexing:** Make sure there are indexes on IS_SAMPLE_CALL, CALL_DATE_VOD__C, ACCOUNT_VOD__C; and TL.ACCOUNT_VOD__C for join performance.
-- **Readability:** Use meaningful column aliases and structure for clarity.
-- **Edge Cases:** Ensure all sampled accounts in CA actually exist in TL. Will any be missing? LEFT JOIN if needed, but requirements indicate only those present in the target list.
-- **Dashboard Filtering:** Comments indicate possible dashboard parameters on region, territory, etc. Add those as needed for further filtering.
+Performance:
+- If AIP_G_CALLS_BASE_TBL is large and Segment is frequently filtered, ensure an index on IS_SAMPLE_CALL, Segment, and Account_Id (if distinct counts are required).
+- If time filters are needed, index CALL_DATE_VOD__C just before filtering.
 
----
+Readability:
+- Use meaningful aliases, avoid cryptic ones.
+- Avoid UNION ALL if output can be pivoted using CASE and simple SELECT, unless dashboard requires both metrics as rows.
+- Avoid excessive comments and commented code in production SQL.
+
+Edge cases:
+- Confirm IS_SAMPLE_CALL is a Boolean/TinyInt, or cast explicitly if not.
+- Confirm that Segment and Account_Id are always present: missing/NULL will impact COUNT(DISTINCT ...).
+
+Indexes:
+- If you frequently GROUP and COUNT by Segment and Account_Id, a composite index will help.
+
+Hints:
+- If you UNION ALL, consider ordering results explicitly.
 
 4) Requirement Mismatch
 
-- ❌ The provided SQL does **not** fully satisfy the Description:
-    - It uses a different, possibly pre-aggregated/table (AIP_G_CALLS_BASE_TBL) not referenced in the requirements.
-    - Does **not** join AIP_CRM_TARGET_LIST to derive SEGMENT for accounts, which is required.
-    - Uses generic columns (Segment, Account_Id) instead of explicit mapping to underlying business table/column names.
-    - Lumps both metrics into a single CTE, splitting only on the second SELECT, instead of separating out “Sample Calls” as a total distinct count and “HCP Sampled by Segment” as a grouped count.
-    - Does not clearly allow "Sample Calls" overall (without segment), only by segment.
+Does the SQL satisfy the Description?
 
-**Conclusion:** The provided SQL does not implement the business requirements as described. Use the corrected code above as a template and ensure source tables/column names and joins are consistent with requirements.
+- PARTIALLY.
+- It produces counts of distinct ID and Account_Id by segment, but does not filter the time period explicitly (CALL_DATE_VOD__C). The column names (ID, Account_Id, Segment) do not match those stated in the description (ID, ACCOUNT_VOD__C, SEGMENT, CALL_DATE_VOD__C, IS_SAMPLE_CALL).
+- It assumes that all necessary joins and lookups are already present in AIP_G_CALLS_BASE_TBL, but the dashboard time filter is commented out and not implemented.
+- No logic checks for specific dashboard values (e.g., ALL, custom dates)—this is commented as per instructions.
+
+**Conclusion:** The provided SQL produces the required counts by Segment but neglects required time period filtering via CALL_DATE_VOD__C and does not clarify whether column names actually match the described tables. To fully match requirements, the time filter and precise column names should be confirmed and corrected.
+
+---
+
+**Summary Table**
+
+| Section                    | Status / Notes                                                                                                              |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| 1) Corrected Code          | Provided corrected versions for improved clarity and requirement adherence (see above code blocks).                        |
+| 2) Syntax Errors           | No fatal syntax errors, but square bracket aliasing and template comments are not standard SQL.                            |
+| 3) Suggestions/Improvements| Performance, readability, indexing, clarity suggestions provided above.                                                     |
+| 4) Requirement Mismatch    | Partially meets requirements; missing explicit time filter via CALL_DATE_VOD__C and column naming is ambiguous.            |
 
 ## Git Blame
 ```
-0000000000000000000000000000000000000000 1 1 43
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 1 1 43
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_TPC}}
-0000000000000000000000000000000000000000 2 2
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 2 2
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_STARTDATE}}
-0000000000000000000000000000000000000000 3 3
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 3 3
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_ENDDATE}}
-0000000000000000000000000000000000000000 4 4
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 4 4
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_CD_P_STARTDATE_HIDDEN}}
-0000000000000000000000000000000000000000 5 5
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 5 5
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_PROD}}
-0000000000000000000000000000000000000000 6 6
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 6 6
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_REG}}
-0000000000000000000000000000000000000000 7 7
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 7 7
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_TERR}}
-0000000000000000000000000000000000000000 8 8
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 8 8
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_TEAM}}
-0000000000000000000000000000000000000000 9 9
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 9 9
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	-- // {{CDL_FA_SEG}}
-0000000000000000000000000000000000000000 10 10
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 10 10
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	 
-0000000000000000000000000000000000000000 11 11
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 11 11
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	 
-0000000000000000000000000000000000000000 12 12
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 12 12
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	WITH base AS (
-0000000000000000000000000000000000000000 13 13
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 13 13
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    SELECT
-0000000000000000000000000000000000000000 14 14
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 14 14
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	        Segment, 
-0000000000000000000000000000000000000000 15 15
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 15 15
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	        COUNT(DISTINCT ID) AS sample_calls,
-0000000000000000000000000000000000000000 16 16
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 16 16
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	        COUNT(DISTINCT Account_Id) AS prescribers_sampled
-0000000000000000000000000000000000000000 17 17
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 17 17
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
-0000000000000000000000000000000000000000 18 18
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 18 18
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    WHERE IS_SAMPLE_CALL = 'True' 
-0000000000000000000000000000000000000000 19 19
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 19 19
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--        AND 
-0000000000000000000000000000000000000000 20 20
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 20 20
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--        ({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}})
-0000000000000000000000000000000000000000 21 21
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 21 21
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--        OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}})
-0000000000000000000000000000000000000000 22 22
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 22 22
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--        AND
-0000000000000000000000000000000000000000 23 23
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 23 23
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--?        ,(Product_Name = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
-0000000000000000000000000000000000000000 24 24
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 24 24
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--?        ,(REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
-0000000000000000000000000000000000000000 25 25
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 25 25
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--?        ,(TERRITORY_NAME= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
-0000000000000000000000000000000000000000 26 26
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 26 26
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--?        ,(Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
-0000000000000000000000000000000000000000 27 27
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 27 27
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	--?        ,(Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
-0000000000000000000000000000000000000000 28 28
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 28 28
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    GROUP BY Segment
-0000000000000000000000000000000000000000 29 29
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 29 29
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	)
-0000000000000000000000000000000000000000 30 30
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 30 30
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	 
-0000000000000000000000000000000000000000 31 31
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 31 31
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	SELECT 
-0000000000000000000000000000000000000000 32 32
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 32 32
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    Segment,
-0000000000000000000000000000000000000000 33 33
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 33 33
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
-0000000000000000000000000000000000000000 34 34
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 34 34
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    sample_calls AS [Calls / Prescriber]
-0000000000000000000000000000000000000000 35 35
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 35 35
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	FROM base
-0000000000000000000000000000000000000000 36 36
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 36 36
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	 
-0000000000000000000000000000000000000000 37 37
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 37 37
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	UNION ALL
-0000000000000000000000000000000000000000 38 38
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 38 38
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	 
-0000000000000000000000000000000000000000 39 39
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 39 39
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	SELECT 
-0000000000000000000000000000000000000000 40 40
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 40 40
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    Segment,
-0000000000000000000000000000000000000000 41 41
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 41 41
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
-0000000000000000000000000000000000000000 42 42
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 42 42
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    prescribers_sampled AS [Calls / Prescriber]
-0000000000000000000000000000000000000000 43 43
-author Not Committed Yet
-author-mail <not.committed.yet>
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 43 43
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1762848046
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	FROM base;
