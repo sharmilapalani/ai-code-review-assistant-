@@ -260,7 +260,7 @@ Count of distinct ACCOUNT_VOD__C from AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CALL
 
 ## Uploaded Code
 ```sql
-this is the table we have created using the base logic as AIP_G_CALLS_BASE_TBL table
+this is the table we have created using the base logic as AIP_G_CALLS_BASE_TBL table, pls check if the join match with req given above.
 
 ALTER PROCEDURE [AIP_FULL_COMMERCIAL].[SPLoad_AIP_G_CALLS_BASE_TBL]
 AS
@@ -553,134 +553,73 @@ FROM base;
 Execution blocked: Detected restricted keyword 'drop' in SQL. Execution blocked for safety.
 
 ## AI Feedback
-**1) Corrected Code**
+Below is your structured SQL code review.
 
-Significant corrections are necessary for syntax, safety, and best practices, especially within the stored procedure. Below is the fully corrected code for both the procedure and the chart logic.
+---
 
-### a. Corrected Stored Procedure
+## 1) Corrected Code
+
+### Issues to be corrected:
+- Use `TRUNCATE` or `DELETE FROM` instead of `DROP TABLE` for data refresh (to preserve structure & permissions).
+- The syntax for the `INSERT` in the large ETL script is incorrect and in the wrong order.
+- Non-standard ordering of "INSERT select * from..." (should be `INSERT INTO ... SELECT ...`).
+- No transaction handling or exception catch.
+- `GO` should not appear inside procedure scripts.
+- Some column name case mismatches (e.g., `ACCT_TYP_CD_iv_GSK_CDE__C`).
+- In the sample calls chart logic, clarify hidden variables and parameterization.
+- Filtering IS_SAMPLE_CALL as `'True'` is expected, but confirm values are consistently upper/lowercase.
+
+### Corrected main ETL/procedure code:
 
 ```sql
 ALTER PROCEDURE [AIP_FULL_COMMERCIAL].[SPLoad_AIP_G_CALLS_BASE_TBL]
 AS
 BEGIN
     SET NOCOUNT ON;
-
     ------------------------------------------------------------
     -- 1. DELETE EXISTING DATA
     ------------------------------------------------------------
-
-    -- Use TRUNCATE instead of DROP+CREATE for performance/safety.
     IF OBJECT_ID('AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL', 'U') IS NOT NULL
+    BEGIN
         TRUNCATE TABLE AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL;
+    END
 
-    -- If table does not exist, create it.
-    IF OBJECT_ID('AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL', 'U') IS NULL
-        CREATE TABLE AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL (
-            Account_Id VARCHAR(50),
-            ID VARCHAR(50),
-            Call_Id VARCHAR(50),
-            STATUS_VOD__C VARCHAR(50),
-            Call_Date DATE,
-            Product_Name VARCHAR(100),
-            STAFF_ONLY VARCHAR(10),
-            INTERACTION_TYPE__C VARCHAR(100),
-            CALL_TYPE_VOD__C VARCHAR(100),
-            OWNERID VARCHAR(50),
-            PARENT_CALL_VOD__C VARCHAR(50),
-            RECORDTYPEID VARCHAR(50),
-            OUTCOME VARCHAR(100),
-            OUTCOME_DETAIL VARCHAR(100),
-            CONTACT_ROLE VARCHAR(100),
-            CALL_ATTEMPT_RESULT INT,
-            IS_SAMPLE_CALL VARCHAR(10),
-            PRSC_CID VARCHAR(50),
-            Specialty VARCHAR(100),
-            Acc_Prescriber VARCHAR(200),
-            Acc_Account_Type VARCHAR(10),
-            ACCT_TYP_CD_IV_GSK_CDE__C VARCHAR(50),
-            PDRP_OPT_OUT_VOD__C VARCHAR(10),
-            EMP_ID VARCHAR(50),
-            TP_Date DATE,
-            TP_Week DATE,
-            TP_Week_Rank INT,
-            TP_Month_str VARCHAR(20),
-            TP_Month_Rank INT,
-            TP_Year_str VARCHAR(10),
-            TP_Year_Rank INT,
-            TP_Quarter_str VARCHAR(10),
-            TP_Quarter_Rank INT,
-            TP_Date_Rank INT,
-            tp_date_str VARCHAR(20),
-            tp_week_str VARCHAR(20),
-            TP_Quarter VARCHAR(10),
-            weekend_flag VARCHAR(10),
-            Team VARCHAR(20),
-            BRAND_NAME VARCHAR(100),
-            PRODUCT_CODE VARCHAR(50),
-            GEO_NUMBER VARCHAR(50),
-            Prescriber VARCHAR(200),
-            Account_Type VARCHAR(10),
-            Presentation_ID_vod__c VARCHAR(10),
-            Successful_Call INT,
-            Attempted_Call INT,
-            TERRITORY_NAME VARCHAR(100),
-            DISTRICT_NAME VARCHAR(100),
-            REGION_NAME VARCHAR(100),
-            POSITION_TITLE VARCHAR(100),
-            REP_FLAG INT,
-            Name VARCHAR(200),
-            ASSIGNMENT_END_DATE DATE,
-            Target_Flag INT,
-            Segment VARCHAR(50),
-            Detailed_Calls INT,
-            CLM_Calls INT,
-            Calls_Only INT,
-            Successful_Target_Calls INT,
-            Pharmacy_Calls INT,
-            Target_Detail_Calls INT
-        );
+    -- Assuming table already exists. Otherwise, create separately as a DDL step.
+    -- CREATE TABLE block should NOT be inside SP unless it's a temporary table.
 
-    -- Now mass-insert new data
+    -- Main logic as in your CTE pipeline
     WITH Interaction AS (
-        -- ...[same as your CTE logic]...
-        -- (No change except formatting if required, see notes below)
-    ),
-    Universe AS (
-        -- ...[same as your CTE logic]...
-    ),
-    Universe_base AS (
-        -- ...[same as your CTE logic]...
-    ),
-    UserHierarchyBase AS (
-        -- ...[same as your CTE logic]...
-    ),
-    UserHierarchy AS (
-        -- ...[same as your CTE logic]...
-    ),
-    icva AS (
-        -- ...[same as your CTE logic]...
-    ),
-    Target AS (
-        -- ...[same as your CTE logic]...
-    ),
-    Base AS (
-        -- ...[same as your CTE logic]...
-    ),
-    Final AS (
-        -- ...[same as your CTE logic]...
+        -- ... (CTEs as posted, unchanged for brevity)
+    ), Universe AS (
+        -- ...
+    ), Universe_base AS (
+        -- ...
+    ), UserHierarchyBase AS (
+        -- ...
+    ), UserHierarchy AS (
+        -- ...
+    ), icva AS (
+        -- ...
+    ), Target AS (
+        -- ...
+    ), Base AS (
+        -- ...
+    ), Final AS (
+        -- ...
     )
     INSERT INTO AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
     SELECT *
     FROM Final;
-END;
-GO
+END
 ```
 
-### b. Corrected Chart SQL
+**If you want to completely rebuild the table each time (not recommended in production):**
 
-✅ The chart CTE-query is generally correct except for over-commented and dead parameter lines, which should be syntactically valid or omitted. For a parameterized report, you'd use proper filter clauses.
+- Execute the `DROP TABLE` and `CREATE TABLE` OUTSIDE the stored procedure as DDL code.
+- Only do this if you are sure no permissions/views, etc., depend on this table, and isolation is guaranteed.
 
-**For demonstration:**
+### Corrected Sample Calls Query:
+
 ```sql
 WITH base AS (
     SELECT
@@ -688,17 +627,19 @@ WITH base AS (
         COUNT(DISTINCT ID) AS sample_calls,
         COUNT(DISTINCT Account_Id) AS prescribers_sampled
     FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
-    WHERE IS_SAMPLE_CALL = 'True'
-    -- Add where clause for date/filters as required, e.g. 
-    -- AND Call_Date BETWEEN @start_date AND @end_date
+    WHERE IS_SAMPLE_CALL = 'True' 
+    -- AND further filters for dashboard time period etc.
     GROUP BY Segment
 )
+ 
 SELECT 
     Segment,
     '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
     sample_calls AS [Calls / Prescriber]
 FROM base
+ 
 UNION ALL
+ 
 SELECT 
     Segment,
     'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
@@ -708,49 +649,109 @@ FROM base;
 
 ---
 
-**2) Syntax Errors**
+## 2) Syntax Errors
 
-- ❌ Major error: `DROP TABLE` immediately followed by `CREATE TABLE` is hazardous and fails if the table is referenced by views/constraints or if table doesn't exist.
-- ❌ Missing `INSERT INTO` before `SELECT * from AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL` (should be `INSERT INTO tablename SELECT ...`).
-- ❌ Comment lines in the last query (chart CTE) are not valid SQL and will error unless properly parameterized or handled in reporting layer.
-- ❌ Invalid use of `INSERT select * from AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL`. You should insert `into` the table from a derived table/CTE, not from the table itself.
+- ❌ **DROP TABLE** and **CREATE TABLE** inside a stored procedure are generally bad practice, and will fail if table is in use or permissions are affected.
+- ❌ Incorrect `INSERT select * from AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL SELECT * FROM Final;`  
+  - Correct is: `INSERT INTO AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL SELECT * FROM Final;`
+- ❌ The ending `GO` batch separator is not part of valid T-SQL stored procedure text.  
+- ❌ DDL (CREATE TABLE) inside SP works only for temp (#/##) tables, not permanent tables.
 
-**3) Suggestions / Improvements**
+**Summary:**  
+**❌ Syntax errors found. DDL inside SP, incorrect `INSERT SELECT` syntax, and extra `GO`.**
 
-- **Safety:** Avoid `DROP TABLE` in production ETL. Use `TRUNCATE TABLE` if possible. If not, use `DELETE` (but slower), and only recreate the table if it doesn't exist.
-- **Concurrency:** Dropping the table may break code/reports that depend on the table’s schema if running simultaneously.
-- **Create Table Only If Not Exists:** Use `IF OBJECT_ID('schema.table', 'U') IS NULL ... CREATE TABLE` rather than just creating.
-- **Explicit Insert:** Always use `INSERT INTO schema.tbl (...) SELECT ...`. Never use `INSERT ... from tbl` (your code had `INSERT select * from AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL SELECT * FROM Final`).
-- **CTE readability:** Consider keeping your CTE list at the top for readability; indent and format for clarity.
-- **Parameterization:** The commented block in the chart logic should be actual parameters or dynamic SQL—never leave code with pseudo-variables and commented-out filter logic.
-- **Case-sensitive typos:** You have inconsistent casing in references, e.g., `ACCT_TYP_CD_iv_GSK_CDE__C` vs. `ACCT_TYP_CD_IV_GSK_CDE__C`. Columns may be case-sensitive depending on DB collation.
-- **Table design:** No primary key or indexes defined on `AIP_G_CALLS_BASE_TBL`. Depending on later querying, you should consider at least a clustered index, e.g. on `(ID)` or date plus segment.
-- **Data types:** Using `VARCHAR(10)` for boolean fields is inefficient; use `BIT` in future designs.
-- **Batch loads:** For large data, consider `TABLOCK` hint or bulk-loading in production ETL.
+---
 
-**4) Requirement Mismatch**
+## 3) Suggestions / Improvements
 
-- **Does the SQL satisfy the Description?**  
-   - For the stored procedure: **Yes, provided corrections are made**. The base joins and filtering logic are complete as per your description; it should load the base table as described.
-   - For the chart logic: **Yes**, it will produce the correct summary for "#Sample Calls" and "Prescribers Sampled" by segment from the base table, given the field definitions and filter on `IS_SAMPLE_CALL = 'True'`.
-   - **However, deployment of the current
+### General Best Practices
+
+- **Table Creation**: Create permanent tables outside of SP. SPs should only truncate or delete if resetting data.
+- **Transaction Handling**: Consider using `BEGIN TRY ... END TRY ... BEGIN CATCH ... END CATCH` and explicit transaction blocks for ETL load reliability.
+- **Exception Handling**: Add error capture/logging for failure cases.
+- **Column Name Consistency**: Check for inconsistent/case-sensitive column names between CTE/projection/table definition (e.g., `ACCT_TYP_CD_iv_GSK_CDE__C` vs `ACCT_TYP_CD_IV_GSK_CDE__C`).
+- **Performance**: 
+  - Use EXISTS/IN efficiently; the approach is fine for data volumes < millions, else consider temp tables or indexed columns.
+  - Index `IS_SAMPLE_CALL`, `Account_ID`, `Call_Date`, and `Segment` columns if querying frequently by those.
+- **Filtering**:
+  - When using IS_SAMPLE_CALL = 'True', make sure column values and source ETL are consistently cased.
+  - For dashboard filtering (commented out), consider parameterized SP or views for fluid use.
+
+### Readability
+
+- Add comments for major transformation areas.
+- Qualify ambiguous column names in SELECTs.  
+- Avoid `SELECT *`; enumerate columns to prevent issues if schema changes.
+- Don't use single-letter alias like `i` for major fact tables in multi-page scripts for clarity.
+
+### Edge Cases
+
+- Be careful in CTE joins (`Universe_base` and `Base`) to guarantee one-to-one matches; your use of `ROW_NUMBER()` per PRSC_CID is OK but document why that's sufficient.
+- Table resets (TRUNCATE or DELETE) do not reset identity columns. If you use them, call DBCC CHECKIDENT accordingly.
+
+---
+
+## 4) Requirement Mismatch
+
+### Does the code satisfy the Description?
+
+**Base Table Logic:**
+- The base table pulls from `AIP_CRM_CALL_ACTIVITY`, joins to user, account, and record type details; all relevant columns appear in the staged and final outputs.
+- The segment logic and mapping to analytics are present.
+
+**Sample Calls / Prescribers Sampled:**
+- The final sample calls logic correctly counts distinct calls and prescribers by IS_SAMPLE_CALL = True, grouped by segment. This matches the stated logic.
+
+**Segment Derivation:**
+- `Segment` is derived in the base CTE and carried through each layer; it supports both 'Sample Calls' and 'Prescribers Sampled' views.
+
+**Required Joins:**
+- Joins and filters described in the requirement (e.g.: by IS_SAMPLE_CALL, timeframe, segment mapping via target list) appear to be correctly implemented.
+
+**Dashboard Filtering:**
+- While commented out, all the desired filter points are apparent and easily parameterizable.
+
+**Key Issue:**
+- The major requirements (join structure, column presence, sample call and prescriber segmentation) are satisfied IF the ETL runs as intended.
+
+**BUT:**
+- As currently written, the ETL will likely FAIL due to DDL-in-SP and `INSERT` syntax issues.
+- In practice, correct for these syntax/operational issues.
+
+**Conclusion**
+- The intent of the SQL matches requirements but the operational implementability requires attention. The logic paths, joins, and calculations for sample calls and prescribers by segment are accurate as specified.
+
+---
+
+**Summary Table**
+
+| Section              | Status/Notes                                                                                                  |
+|----------------------|--------------------------------------------------------------------------------------------------------------|
+| Corrected Code       | Changes required: Remove DDL from SP, fix `INSERT` syntax, remove `GO`, fix colname case mismatches           |
+| Syntax Errors        | Found: DDL-in-SP, wrong `INSERT` syntax, `GO` in code                                                        |
+| Suggestions          | Transaction handling, enum columns, indexes, parameterization, source/target col name reviews                 |
+| Requirement Match    | ✔ Yes, if syntax/operational issues are corrected; logic and joins match requirements for chart derivation    |
+
+---
+
+If you need tailored CREATE TABLE scripts, parameterized SP templates, or further refactoring, specify your target platform (e.g., SQL Server, Synapse, etc.).
 
 ## Git Blame
 ```
-7ae1788762b98e1f9f095fd37718b6ba6deb90da 1 1 252
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762932957
+0000000000000000000000000000000000000000 1 1 1
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762933338
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762932957
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762933338
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 8578b69fcc1ddd78f4cd68cfe3fc3853a5b644d7 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous a7b240891d25c9bedfdadeebe5ada3295b851ad5 pasted_code.sql
 filename pasted_code.sql
-	this is the table we have created using the base logic as AIP_G_CALLS_BASE_TBL table
-7ae1788762b98e1f9f095fd37718b6ba6deb90da 2 2
+	this is the table we have created using the base logic as AIP_G_CALLS_BASE_TBL table, pls check if the join match with req given above.
+7ae1788762b98e1f9f095fd37718b6ba6deb90da 2 2 251
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762932957

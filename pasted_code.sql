@@ -1,4 +1,4 @@
-this is the table we have created using the base logic as AIP_G_CALLS_BASE_TBL table
+this is the table we have created using the base logic as AIP_G_CALLS_BASE_TBL table, pls check if the join match with req given above.
 
 ALTER PROCEDURE [AIP_FULL_COMMERCIAL].[SPLoad_AIP_G_CALLS_BASE_TBL]
 AS
