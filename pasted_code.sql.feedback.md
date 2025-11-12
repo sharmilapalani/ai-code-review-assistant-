@@ -253,51 +253,43 @@ END;
 GO
 Below is the logic for chart 
 	
-#Sample Calls  : Count distinct ID from the AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CALL = True , for selected Time period in the Dashboard , the Time period is determined by CALL_DATE_VOD__C column from the AIP_CRM_CALL_ACTVITY. '#Saple Calls" in #Sample Calls / Prescribers Sampled column  
+Sample Calls  : Count distinct ID from the AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CALL = True , for selected Time period in the Dashboard , the Time period is determined by CALL_DATE_VOD__C column from the AIP_CRM_CALL_ACTVITY.
 
 HCPs Sampled by Segment :
-Count of distinct ACCOUNT_VOD__C from AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CALL = True ,'Prescribers Sampled" in #Sample Calls / Prescribers Sampled column  for selected Time period in the Dashboard , the Time period is determined by CALL_DATE_VOD__C column from the AIP_CRM_CALL_ACTVITY and HCP segment is derived from AIP_CRM_TARGET_LIST identified by AIP_CRM_CALL_ACTVITY  . ACCOUNT_VOD__C= AIP_CRM_TARGET_LIST .ACCOUNT_VOD__C and pull the column SEGMENT. Review this
+
+Count of distinct ACCOUNT_VOD__C from AIP_CRM_CALL_ACTVITY  where IS_SAMPLE_CALL = True , for selected Time period in the Dashboard , the Time period is determined by CALL_DATE_VOD__C column from the AIP_CRM_CALL_ACTVITY and HCP segment is derived from AIP_CRM_TARGET_LIST identified by AIP_CRM_CALL_ACTVITY  . ACCOUNT_VOD__C= AIP_CRM_TARGET_LIST .ACCOUNT_VOD__C and pull the column SEGMENT.
 
 ## Uploaded Code
 ```sql
--- // {{CDL_FA_TPC}}
--- // {{CDL_FA_STARTDATE}}
--- // {{CDL_FA_ENDDATE}}
--- // {{CDL_CD_P_STARTDATE_HIDDEN}}
--- // {{CDL_FA_PROD}}
--- // {{CDL_FA_REG}}
--- // {{CDL_FA_TERR}}
--- // {{CDL_FA_TEAM}}
--- // {{CDL_FA_SEG}}
- 
- 
-WITH base AS (
-    SELECT
+SELECT
         Segment, 
         COUNT(DISTINCT ID) AS sample_calls,
         COUNT(DISTINCT Account_Id) AS prescribers_sampled
     FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
-    WHERE IS_SAMPLE_CALL = 'True' 
---        AND 
---        ({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}})
---        OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}})
---        AND
---?        ,(Product_Name = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
---?        ,(REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
---?        ,(TERRITORY_NAME= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
---?        ,(Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
---?        ,(Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
+    WHERE IS_SAMPLE_CALL = 'True'
+      AND (
+            (
+                {{CDL_FA_TPC}} <> 'Custom'
+                AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}}
+            )
+            OR (
+                {{CDL_FA_TPC}} = 'Custom'
+                AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}
+            )
+        )
+      AND ({{CDL_FA_PROD}} = 'ALL' OR Product_Name = {{CDL_FA_PROD}})
+      AND ({{CDL_FA_REG}} = 'ALL' OR REGION_NAME = {{CDL_FA_REG}})
+      AND ({{CDL_FA_TERR}} = 'ALL' OR TERRITORY_NAME = {{CDL_FA_TERR}})
+      AND ({{CDL_FA_TEAM}} = 'ALL' OR Team = {{CDL_FA_TEAM}})
+      AND ({{CDL_FA_SEG}} = 'ALL' OR Segment = {{CDL_FA_SEG}})
     GROUP BY Segment
 )
- 
 SELECT 
     Segment,
     '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
     sample_calls AS [Calls / Prescriber]
 FROM base
- 
 UNION ALL
- 
 SELECT 
     Segment,
     'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
@@ -306,51 +298,10 @@ FROM base;
 ```
 
 ## CDL Execution Summary
-✅ Execution succeeded. Sample rows:
-Segment | #Sample Calls / Prescribers Sampled | Calls / Prescriber
---------|-------------------------------------|-------------------
-Tier 3 | #Sample Calls | 1204
-Direct Competitor Writer | #Sample Calls | 8
-Non-ECL | #Sample Calls | 3469
-Non-Tier Targets | #Sample Calls | 845
-Tier 2 | #Sample Calls | 444
-Tier 3 | Prescribers Sampled | 290
-Tier 1 | #Sample Calls | 388
-Non-ECL | Prescribers Sampled | 1001
-Non-Tier Targets | Prescribers Sampled | 266
-Tier 2 | Prescribers Sampled | 87
-...plus 2 more rows (sample truncated).
-
-## Sample Rows
-```
-Segment | #Sample Calls / Prescribers Sampled | Calls / Prescriber
---------|-------------------------------------|-------------------
-Tier 3 | #Sample Calls | 1204
-Direct Competitor Writer | #Sample Calls | 8
-Non-ECL | #Sample Calls | 3469
-Non-Tier Targets | #Sample Calls | 845
-Tier 2 | #Sample Calls | 444
-Tier 3 | Prescribers Sampled | 290
-Tier 1 | #Sample Calls | 388
-Non-ECL | Prescribers Sampled | 1001
-Non-Tier Targets | Prescribers Sampled | 266
-Tier 2 | Prescribers Sampled | 87
-...plus 2 more rows (sample truncated).
-```
+⚠️ Execution error: ('42000', '[42000] [Microsoft][ODBC Driver 17 for SQL Server]Syntax error, permission violation, or other nonspecific error (0) (SQLExecDirectW)')
 
 ## AI Feedback
-**SQL Code Review**
-
----
-
-### 1) Corrected Code
-
-**Minor corrections for clarity and SQL best practices:**  
-- Improve alias naming for columns.  
-- Add explicit `ORDER BY` for consistent reporting.  
-- Remove commented/placeholder filter logic or convert to template parameters for clarity (if using in a dynamic SQL engine or data visualization tool, document this elsewhere).
-
-Here’s the suggested improved version for maintainability and clarity:
+**1) Corrected Code**
 
 ```sql
 WITH base AS (
@@ -360,292 +311,120 @@ WITH base AS (
         COUNT(DISTINCT Account_Id) AS prescribers_sampled
     FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
     WHERE IS_SAMPLE_CALL = 'True'
-    -- Add actual filters for date/products/region/etc. as required, e.g.:
-    -- AND Call_Date BETWEEN @STARTDATE AND @ENDDATE
-    -- AND (Product_Name = @Product OR @Product = 'ALL')
-    -- AND (REGION_NAME = @Region OR @Region = 'ALL')
-    -- AND (TERRITORY_NAME = @Territory OR @Territory = 'ALL')
-    -- AND (Team = @Team OR @Team = 'ALL')
-    -- AND (Segment = @Segment OR @Segment = 'ALL')
+      AND (
+            (
+                {{CDL_FA_TPC}} <> 'Custom'
+                AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}}
+            )
+            OR (
+                {{CDL_FA_TPC}} = 'Custom'
+                AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}
+            )
+        )
+      AND ({{CDL_FA_PROD}} = 'ALL' OR Product_Name = {{CDL_FA_PROD}})
+      AND ({{CDL_FA_REG}} = 'ALL' OR REGION_NAME = {{CDL_FA_REG}})
+      AND ({{CDL_FA_TERR}} = 'ALL' OR TERRITORY_NAME = {{CDL_FA_TERR}})
+      AND ({{CDL_FA_TEAM}} = 'ALL' OR Team = {{CDL_FA_TEAM}})
+      AND ({{CDL_FA_SEG}} = 'ALL' OR Segment = {{CDL_FA_SEG}})
     GROUP BY Segment
 )
 SELECT 
     Segment,
-    '#Sample Calls' AS report_label,
-    sample_calls AS metric_value
+    '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
+    sample_calls AS [Calls / Prescriber]
 FROM base
-
 UNION ALL
-
 SELECT 
     Segment,
-    'Prescribers Sampled' AS report_label,
-    prescribers_sampled AS metric_value
-FROM base
-ORDER BY Segment, report_label;
+    'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
+    prescribers_sampled AS [Calls / Prescriber]
+FROM base;
 ```
-
-Notes:
-- Column names changed so they are programming-friendly. Use display aliases only at the visualization/reporting layer.
-- If required, parameterize and include the filtering logic via bind variables, not as commented code.
+**(Moved the final SELECT outside the CTE, as SQL Server requires this. The original code left a hanging closing parenthesis without starting a CTE. See Syntax Errors section below.)**
 
 ---
 
-### 2) Syntax Errors
+**2) Syntax Errors**
 
-✅ No syntax errors found.
+❌ Found the following syntax issue(s):
 
-*The provided SQL executes successfully according to your summary, and no syntactical issues were found.*
-
----
-
-### 3) Suggestions / Improvements
-
-**A. Parameterization and Filtering Logic:**
-- The commented filters should be properly implemented. If this SQL is to be used directly, use either SQL Server variables (`@Param`) or template variables, and ensure null/ALL logic is correct.
-
-**B. Readability:**
-- Rename columns (as above) for easier reference in reporting code.
-- Use explicit `ORDER BY` for predictable result ordering.
-- Add inline comments explaining the business logic for clarity, if this will be maintained in a codebase.
-
-**C. Performance:**
-- Index: If Segment is heavily used for filtering/grouping, ensure the underlying table has an index on `Segment`, `IS_SAMPLE_CALL`, `ID`, and `Account_Id` for best counting performance.
-- If AIP_G_CALLS_BASE_TBL is very large, also consider filtered indexes:
-    ```sql
-    CREATE INDEX idx_g_calls_base_tbl_sample_call 
-    ON AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL (Segment, ID, Account_Id)
-    WHERE IS_SAMPLE_CALL = 'True';
-    ```
-- If nulls are possible in Segment, be aware that these rows will be grouped as Segment=NULL.
-
-**D. Edge Cases:**
-- If Segment can be NULL, consider whether these should be reported as "Unknown"/"Unassigned" for business clarity.
-- If `ID` and `Account_Id` are not unique per row, validate whether the DISTINCT is necessary (if they’re primary keys, `COUNT` suffices).
-
-**E. Flexibility and Maintenance:**
-- Avoid hardcoding output column names with special characters (#, /). These are better handled in the report layer, not SQL. If required, escape or alias them accordingly at the final presentation step.
+- The code starts with `SELECT ... FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL ... )` which leaves a dangling closing parenthesis before the next `SELECT`, indicating an improperly terminated CTE. In SQL Server, you must use `WITH base AS (...) SELECT ...` not `(...) SELECT ...` on its own.
+- No semicolon is strictly required at the end of SQL Server statements, but good practice is to terminate statements for clarity.
+- The variables such as `{{CDL_FA_TPC}}` are template variables and not valid SQL; they will only resolve if replaced/handled by a higher-level tool (like Looker, Tableau, etc.).
+- There was no `WITH base AS (...)`, only a parenthesized subquery.
+- No alias for the subquery, which is not allowed in T-SQL.
 
 ---
 
-### 4) Requirement Mismatch
+**3) Suggestions / Improvements**
 
-#### Does the SQL meet the description?
-
-- **Requirement**:  
-    - "#Sample Calls" = Count distinct `ID` from `AIP_CRM_CALL_ACTIVITY` where `IS_SAMPLE_CALL = True` for selected dashboard period, grouped by HCP Segment.
-    - "Prescribers Sampled" = Count distinct `ACCOUNT_VOD__C` from `AIP_CRM_CALL_ACTIVITY` where `IS_SAMPLE_CALL = True` for selected period, grouped by segment (from target list).
-    - The 'segment' is to be derived (joined) from the target list when present.
-
-**Current Query Approach**:
-- Operates on `AIP_G_CALLS_BASE_TBL`, which is claimed to have the proper joins/logic already completed, and contains both `Segment`, `ID`, and `Account_Id`.
-- The filtered aggregate logic matches requirements: counting distinct `ID` vs `Account_Id`, grouped by Segment, when `IS_SAMPLE_CALL='True'`.
-
-**Potential Issue**:
-- The assumption is that `AIP_G_CALLS_BASE_TBL` was built **per the described logic**:  
-    - Segment must represent the HCP segment as derived, not just copied.  
-    - Account_Id must be the same as ACCOUNT_VOD__C from activity table.
-    - The filtered data must reflect the selected dashboard period (which is currently commented out).
-
-**Conclusion**:
-- **The SQL as written does satisfy the requirement**—**if** `AIP_G_CALLS_BASE_TBL` was populated as per the described logic (segment association, data deduplication, correct period, etc).
-- The only functional gap is that the required time-period and possible other dashboard-level filters are commented instead of implemented.
-- You must ensure that future versions include parameterized/dashboard filters for date range, product, region, etc. Otherwise, aggregates may not reflect the 'selected dashboard period' as described.
+- **Performance**
+    - Ensure an index exists on `IS_SAMPLE_CALL`, `Call_Date`, and `Segment` in `AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL` to optimize WHERE and GROUP BY performance.
+    - The use of multiple ORs in the WHERE clause (e.g., for custom vs. default dates) may inhibit index usage. Consider splitting queries programmatically when possible.
+- **Readability**
+    - Template variables should be commented or replaced with defaults for easier standalone testing/debugging.
+    - Consider factoring the repeated structure in WHERE with parameters or explicit block comments.
+- **Edge-Cases**
+    - If any of the lookups (e.g., on `Segment`) can be NULL, ensure results do not get dropped due to GROUP BY or WHERE.
+    - If filters are optional (e.g., `{{CDL_FA_PROD}} = 'ALL'`), make sure the front-end guarantees the value 'ALL' and it is case-consistent.
+- **Result format**
+    - This "pivot" approach is fine, but if the dashboard requires one row per segment with multiple columns, consider providing results as:
+      ```sql
+      SELECT 
+          Segment, 
+          COUNT(DISTINCT ID) AS [Sample Calls],
+          COUNT(DISTINCT Account_Id) AS [Prescribers Sampled]
+      FROM ...
+      GROUP BY Segment
+      ```
 
 ---
 
-**Summary Table (Requirement Fit):**
+**4) Requirement Mismatch**
 
-| Requirement Field         | SQL Provided?                 | Note                                                 |
-|--------------------------|-------------------------------|------------------------------------------------------|
-| #Sample Calls            | Yes (COUNT DISTINCT ID)       | Correct if ID is unique to each call                 |
-| Prescribers Sampled      | Yes (COUNT DISTINCT Account_Id)| Correct if Account_Id maps to ACCOUNT_VOD__C         |
-| Segment grouping         | Yes (on Segment in base table)| Assumes Segment derived as per business spec         |
-| Time period filter       | No (filter commented out)     | Must implement for production/deployment             |
-| Other dashboard filters  | No (filter commented out)     | Required for user-driven drilldown/reporting         |
+❌ The SQL does *not* fully satisfy the requirements as described:
+
+- The code properly calculates:
+    - **Sample Calls:** By counting distinct `ID` where `IS_SAMPLE_CALL = 'True'` in the base table and for selected `Call_Date` period.
+    - **HCPs Sampled by Segment (Prescribers Sampled):** By counting distinct `Account_Id` with the same filters and grouping by `Segment`.
+- **However**, per the Description, "HCP segment is derived from AIP_CRM_TARGET_LIST identified by AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C = AIP_CRM_TARGET_LIST.ACCOUNT_VOD__C", and "Segment" comes from that logic.  
+    - The code assumes "Segment" is **already in** `AIP_G_CALLS_BASE_TBL`. You must be absolutely sure that the field in the base table is populated correctly per the business requirement. If not, then the SQL is *insufficient*.
+    - If "Segment" is *not* pre-joined in the base, the SQL must join to AIP_CRM_TARGET_LIST in this reporting query to assign accurate segment.
+- The SQL structure (after syntactic fix) otherwise matches the aggregation needs.
+
+**Summary**:  
+- If `AIP_G_CALLS_BASE_TBL` has the correct `Segment` value for each row, this SQL (with corrected syntax) matches requirements.
+- If not, the query is incomplete for requirement 2 and must join with the target list.  
+- Syntax errors must be fixed for code to be executable.
 
 ---
 
-**Action Items:**
-- Implement actual parameterized filtering for time period and dashboard controls.
-- Confirm Segment and Account_Id columns in base table are populated as described.
-- Rename output columns and avoid special characters unless required for output format.
-- Ensure relevant indexes are in place for large data sets.
+**Final Review Summary Table**
 
----
+| Area                   | OK? | Comments                                                     |
+|------------------------|-----|--------------------------------------------------------------|
+| Accurate Syntax        | ❌  | CTE not properly declared/closed.                            |
+| Filters per Spec       | ✅  | Logic and filter implementation are correct.                 |
+| Output Format          | ✅  | Matches dashboard requirements (pivoted small table).         |
+| Segment Derivation     | ⚠️  | Only compliant if base table already contains true segments. |
+| Performance/Index Hints| ⚠️  | Indexes recommended for critical columns.                    |
 
 ## Git Blame
 ```
-21fdad271f2cb91d27b1a9f5586294c104032808 1 1 11
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+0000000000000000000000000000000000000000 1 1 1
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	-- // {{CDL_FA_TPC}}
-21fdad271f2cb91d27b1a9f5586294c104032808 2 2
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_FA_STARTDATE}}
-21fdad271f2cb91d27b1a9f5586294c104032808 3 3
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_FA_ENDDATE}}
-21fdad271f2cb91d27b1a9f5586294c104032808 4 4
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_CD_P_STARTDATE_HIDDEN}}
-21fdad271f2cb91d27b1a9f5586294c104032808 5 5
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_FA_PROD}}
-21fdad271f2cb91d27b1a9f5586294c104032808 6 6
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_FA_REG}}
-21fdad271f2cb91d27b1a9f5586294c104032808 7 7
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_FA_TERR}}
-21fdad271f2cb91d27b1a9f5586294c104032808 8 8
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_FA_TEAM}}
-21fdad271f2cb91d27b1a9f5586294c104032808 9 9
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	-- // {{CDL_FA_SEG}}
-21fdad271f2cb91d27b1a9f5586294c104032808 10 10
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	 
-21fdad271f2cb91d27b1a9f5586294c104032808 11 11
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	 
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 12 12 6
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762848046
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762848046
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
-filename pasted_code.sql
-	WITH base AS (
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 13 13
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762848046
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762848046
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
-filename pasted_code.sql
-	    SELECT
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 14 14
+	SELECT
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 14 2 4
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -658,7 +437,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	        Segment, 
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 15 15
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 15 3
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -671,7 +450,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	        COUNT(DISTINCT ID) AS sample_calls,
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 16 16
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 16 4
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -684,7 +463,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	        COUNT(DISTINCT Account_Id) AS prescribers_sampled
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 17 17
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 17 5
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -697,137 +476,215 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL 
-21fdad271f2cb91d27b1a9f5586294c104032808 18 18 10
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+0000000000000000000000000000000000000000 6 6 16
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	    WHERE IS_SAMPLE_CALL = 'True' 
-21fdad271f2cb91d27b1a9f5586294c104032808 19 19
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	    WHERE IS_SAMPLE_CALL = 'True'
+0000000000000000000000000000000000000000 7 7
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--        AND 
-21fdad271f2cb91d27b1a9f5586294c104032808 20 20
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	      AND (
+0000000000000000000000000000000000000000 8 8
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--        ({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}})
-21fdad271f2cb91d27b1a9f5586294c104032808 21 21
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	            (
+0000000000000000000000000000000000000000 9 9
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--        OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}})
-21fdad271f2cb91d27b1a9f5586294c104032808 22 22
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	                {{CDL_FA_TPC}} <> 'Custom'
+0000000000000000000000000000000000000000 10 10
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--        AND
-21fdad271f2cb91d27b1a9f5586294c104032808 23 23
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	                AND Call_Date BETWEEN {{CDL_CD_P_STARTDATE_HIDDEN}} AND {{CDL_CD_P_ENDDATE_HIDDEN}}
+0000000000000000000000000000000000000000 11 11
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--?        ,(Product_Name = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
-21fdad271f2cb91d27b1a9f5586294c104032808 24 24
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	            )
+0000000000000000000000000000000000000000 12 12
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--?        ,(REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
-21fdad271f2cb91d27b1a9f5586294c104032808 25 25
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	            OR (
+0000000000000000000000000000000000000000 13 13
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--?        ,(TERRITORY_NAME= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
-21fdad271f2cb91d27b1a9f5586294c104032808 26 26
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	                {{CDL_FA_TPC}} = 'Custom'
+0000000000000000000000000000000000000000 14 14
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--?        ,(Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
-21fdad271f2cb91d27b1a9f5586294c104032808 27 27
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
+	                AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}
+0000000000000000000000000000000000000000 15 15
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
 filename pasted_code.sql
-	--?        ,(Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 28 28 2
+	            )
+0000000000000000000000000000000000000000 16 16
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
+filename pasted_code.sql
+	        )
+0000000000000000000000000000000000000000 17 17
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
+filename pasted_code.sql
+	      AND ({{CDL_FA_PROD}} = 'ALL' OR Product_Name = {{CDL_FA_PROD}})
+0000000000000000000000000000000000000000 18 18
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
+filename pasted_code.sql
+	      AND ({{CDL_FA_REG}} = 'ALL' OR REGION_NAME = {{CDL_FA_REG}})
+0000000000000000000000000000000000000000 19 19
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
+filename pasted_code.sql
+	      AND ({{CDL_FA_TERR}} = 'ALL' OR TERRITORY_NAME = {{CDL_FA_TERR}})
+0000000000000000000000000000000000000000 20 20
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
+filename pasted_code.sql
+	      AND ({{CDL_FA_TEAM}} = 'ALL' OR Team = {{CDL_FA_TEAM}})
+0000000000000000000000000000000000000000 21 21
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1762932240
+author-tz +0530
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1762932240
+committer-tz +0530
+summary Version of pasted_code.sql from pasted_code.sql
+previous 37c2dd7ee9ada63e6b8d2ca7a3273267d4634d23 pasted_code.sql
+filename pasted_code.sql
+	      AND ({{CDL_FA_SEG}} = 'ALL' OR Segment = {{CDL_FA_SEG}})
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 28 22 2
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -840,7 +697,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    GROUP BY Segment
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 29 29
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 29 23
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -853,20 +710,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	)
-21fdad271f2cb91d27b1a9f5586294c104032808 30 30 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	 
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 31 31 5
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 31 24 5
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -879,7 +723,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	SELECT 
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 32 32
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 32 25
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -892,7 +736,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    Segment,
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 33 33
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 33 26
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -905,7 +749,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    '#Sample Calls' AS [#Sample Calls / Prescribers Sampled],
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 34 34
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 34 27
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -918,7 +762,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    sample_calls AS [Calls / Prescriber]
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 35 35
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 35 28
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -931,20 +775,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	FROM base
-21fdad271f2cb91d27b1a9f5586294c104032808 36 36 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	 
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 37 37 1
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 37 29 1
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -957,20 +788,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	UNION ALL
-21fdad271f2cb91d27b1a9f5586294c104032808 38 38 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762931798
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762931798
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 177c0502e053d936ef9c3a723c05e8c65c8b7388 pasted_code.sql
-filename pasted_code.sql
-	 
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 39 39 5
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 39 30 5
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -983,7 +801,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	SELECT 
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 40 40
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 40 31
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -996,7 +814,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    Segment,
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 41 41
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 41 32
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -1009,7 +827,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    'Prescribers Sampled' AS [#Sample Calls / Prescribers Sampled],
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 42 42
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 42 33
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
@@ -1022,7 +840,7 @@ summary Code review for pasted_code.sql
 previous 0bebcbcf95ef394824b7edfac94496e42111e0c9 pasted_code.sql
 filename pasted_code.sql
 	    prescribers_sampled AS [Calls / Prescriber]
-8ea68301c3f0b26e1b438bb6c172328d4e8569f1 43 43
+8ea68301c3f0b26e1b438bb6c172328d4e8569f1 43 34
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1762848046
