@@ -250,6 +250,7 @@ FROM Final;
 END;
 GO
 
+usig the above table we are deriving this bbased on logic given above
 
 
 WITH base AS (
