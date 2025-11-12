@@ -1,13 +1,6 @@
 this is the table we have created using the base logic as AIP_G_CALLS_BASE_TBL table, pls check if the join match with req given above.
 
-ALTER PROCEDURE [AIP_FULL_COMMERCIAL].[SPLoad_AIP_G_CALLS_BASE_TBL]
-AS
-BEGIN
-    SET NOCOUNT ON;
-    ------------------------------------------------------------
-    -- 1. DELETE EXISTING DATA
-    ------------------------------------------------------------
-   DROP TABLE AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
+
    CREATE TABLE AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL (
     Account_Id VARCHAR(50),
     ID VARCHAR(50),
@@ -247,8 +240,7 @@ Final AS (
 INSERT select * from  AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
 SELECT *
 FROM Final;
-END;
-GO
+
 
 usig the above table we are deriving this bbased on logic given above
 
