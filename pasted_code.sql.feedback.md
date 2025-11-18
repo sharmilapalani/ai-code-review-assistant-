@@ -2,10 +2,10 @@
 
 ## Description
 We have a created a stored procedure and created  few Flag columns in it. Pls chk those flag columns satisfy the logic given below.
-Detailed_Calls:  For field Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail , STAFF_ONLY like "False", Account_Type like "HCP",Team like "Field" from Call table to (Accounts , where IS_PERSON_ACCOUNT=True from the account table able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
-For EC Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail,Team like "EC" from Call table to (Accounts , where IS_PERSON_ACCOUNT=False from the account table able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
+Detailed_Calls:  For field Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail , STAFF_ONLY like "False", Account_Type like "HCP",Team like "Field" from Call table to  Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
+For EC Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail,Team like "EC" from Call table to  Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
 Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%'. 
-CLM_Calls: Count distinct CALL2_VOD_C by joining Call Table and call key message table based on joining call table
+CLM_Calls: Count of Calls by joining Call Table and call key message table based on joining call table
 
 ## Uploaded Code
 ```sql
@@ -342,18 +342,18 @@ Execution blocked: Detected restricted keyword 'exec' in SQL. Execution blocked 
 
 ## AI Feedback
 1) Corrections  
-- The Detailed_Calls logic does not correctly implement the separation for Team="Field" (IS_PERSON_ACCOUNT=True/"HCP") and Team="EC" (IS_PERSON_ACCOUNT=False/"HCO") as described.
-- Pharmacy_Calls should check for ACCT_TYP_CD_IV_GSK_CDE__C LIKE '%PHRM%' AND Account_Type="HCO", which is correct.
-- CLM_Calls is counting when Presentation_ID_vod__c is not empty and Account_Type="HCP" but should count distinct CALL2_VOD__C via call key message join, not per-row.
+- The logic for the Detailed_Calls and EC Team Count is combined and does not distinctly group by AIP_ACCOUNT_TARGETS.SEGMENT for Team='Field' (HCP) and Team='EC' (EC), which is required.  
+- CLM_Calls should join to Call Key Message Table to count calls, but current logic only flags Presentation_ID_vod__c; needs to count distinct Call Id from join.  
+- Pharmacy_Calls logic correct for ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%' and Account_Type='HCO' — No changes required for this.
 
 2) Errors  
-- The logic to split Detailed_Calls for Team="Field" and "EC" against IS_PERSON_ACCOUNT is incorrect.
-- CLM_Calls logic will overcount due to not being at distinct CALL2_VOD__C granularity.
+- Major error: Missing segmentation/grouping by AIP_ACCOUNT_TARGETS.SEGMENT for Team Count flags; flags not satisfying “group by Segment” requirement.  
+- Major error: CLM_Calls does not comply with logic; it should count based on a join with the Call Key Message table, not just set a flag using a column.
 
 3) Quick Suggestions  
-- Filter Detailed_Calls by TEAM and IS_PERSON_ACCOUNT as described in description.
-- Aggregate CLM_Calls as COUNT(DISTINCT CALL2_VOD__C) per Call_ID, not per row.
-- Use proper groupings for segment assignments as per description.
+- Consider splitting flag logic for Detailed_Calls and EC Team Count for clearer separation and aggregation.  
+- Use COUNT(*) OVER(PARTITION BY ...) for flags needing group counts rather than binary flags for reporting clarity.  
+- Simplify CASE statements using parentheses for correct logical precedence and improved readability.
 
 ## Git Blame
 ```
