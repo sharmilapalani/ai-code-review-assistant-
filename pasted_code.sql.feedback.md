@@ -2,7 +2,7 @@
 
 ## Description
 We have a created a stored procedure and created  few Flag columns in it. Pls chk those flag columns satisfy the logic given below.
-Pls add a logic for Successful_Target_Calls: where it should satisfy Account_Type LIKE 'HCP' , Successful_Call = 1 AND Target should be 1
+Pls add a logic for count of calls by Region_Name where Successful_Target_Calls: where it should satisfy Account_Type LIKE 'HCP' , Successful_Call = 1 AND Target should be 1
 
 ## Uploaded Code
 ```sql
@@ -297,21 +297,22 @@ Execution blocked: Detected restricted keyword 'create' in SQL. Execution blocke
 
 ## AI Feedback
 1) Corrections  
-Add logic for Successful_Target_Calls as below:
+Add logic for Successful_Target_Calls:  
 ```sql
-CASE
-    WHEN i.Account_Type LIKE 'HCP' AND i.Successful_Call = 1 AND t.Target_Flag = 1 THEN 1
-    ELSE 0
-END AS Successful_Target_Calls,
+, CASE 
+    WHEN i.Account_Type LIKE 'HCP' AND i.Successful_Call = 1 AND t.Target_Flag = 1 THEN 1 
+    ELSE 0 
+  END AS Successful_Target_Calls
 ```
+and include aggregation for count by REGION_NAME as required.
 
 2) Errors  
-No major errors found in existing flag logic.
+No errors found.
 
 3) Quick Suggestions  
-Avoid using SELECT *, list columns explicitly for better maintenance.  
-Review casing of column names for consistency (e.g., ACCT_TYP_CD_iv_GSK_CDE__C vs ACCT_TYP_CD_IV_GSK_CDE__C).  
-Consider using table variable or temp table instead of DROP/CREATE for better concurrency.
+- Improve column aliasing for clarity (avoid i.*, u.*, t.* in final SELECT).
+- Consider using WHERE for row filters to avoid large CASE statements.
+- Add indexes on key columns for join/lookup efficiency if not present.
 
 ## Git Blame
 ```
@@ -3994,16 +3995,16 @@ summary Code review for pasted_code.sql
 previous 69351c7b960301007d45f64e894706da90435d50 pasted_code.sql
 filename pasted_code.sql
 	Region  code
-0000000000000000000000000000000000000000 284 284 1
-author Not Committed Yet
-author-mail <not.committed.yet>
+b56c49b76f55c7a02f5bc2d4f30110ff172965b0 284 284 1
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1763464730
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1763464730
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 73f8229f18a8df4ad2f4cc7fc7f6490b23aac6cc pasted_code.sql
 filename pasted_code.sql
 	Pls provide the region code based on above description
