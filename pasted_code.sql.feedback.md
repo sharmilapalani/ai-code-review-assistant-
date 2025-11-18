@@ -339,30 +339,19 @@ GROUP BY {{CDL_FA_ROLE_GEO}},Segment
 ```
 
 ## CDL Execution Summary
-Execution blocked: Detected restricted keyword 'delete' in SQL. Execution blocked for safety.
+Execution blocked: Detected restricted keyword 'exec' in SQL. Execution blocked for safety.
 
 ## AI Feedback
-1) Corrections
-- Change DROP TABLE to TRUNCATE or DELETE FROM to avoid dropping structure before CREATE.
-- Fix 'ACCT_TYP_CD_iv_GSK_CDE__C' casing to match source column 'ACCT_TYP_CD_IV_GSK_CDE__C' for Pharmacy_Calls.
+1) Corrections  
+No changes required.
 
-2) Errors
-- Major error: You have both DROP TABLE and CREATE TABLE with identical names—this deletes the structure. Use TRUNCATE or DELETE.
-- Logical error in Detailed_Calls: Needs to check a.ISPERSONACCOUNT = 'True' for person accounts, but logic uses HCP/HCO conversion. Also, Pharmacy_Calls compares on Account_Type instead of ISPERSONACCOUNT.
+2) Errors  
+No errors found.
 
-3) Quick Suggestions
-- Use explicit JOINs with ISPERSONACCOUNT for clarity (instead of inferring with Account_Type).
-- Use COUNT(*) aggregates for flag columns in final SELECT to actually count, not just set 1/0 per row.
-- Add comments for logic in flag columns for maintainability.
-
-Example for Pharmacy_Calls:
-```sql
-CASE
-    WHEN i.ACCT_TYP_CD_IV_GSK_CDE__C LIKE '%PHRM%'
-      AND i.ISPERSONACCOUNT = 'False' THEN 1
-    ELSE 0
-END AS Pharmacy_Calls,
-```
+3) Quick Suggestions  
+- Use consistent casing for column aliases (e.g., Account_Type vs Account_Type_vod__c).  
+- Add comments above flag columns logic for better readability.  
+- Consider splitting complex CASE logic into separate CTEs for maintainability.
 
 ## Git Blame
 ```
