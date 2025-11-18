@@ -296,23 +296,23 @@ Pls provide the region code based on above description
 Execution blocked: Detected restricted keyword 'create' in SQL. Execution blocked for safety.
 
 ## AI Feedback
-1) Corrections  
-Add logic for Successful_Target_Calls:  
+1) Corrections
+Add a logic to count Successful_Target_Calls by Region_Name where Account_Type LIKE 'HCP', Successful_Call = 1, and Target_Flag = 1.
 ```sql
-, CASE 
-    WHEN i.Account_Type LIKE 'HCP' AND i.Successful_Call = 1 AND t.Target_Flag = 1 THEN 1 
-    ELSE 0 
-  END AS Successful_Target_Calls
+SELECT REGION_NAME, COUNT(1) AS Successful_Target_Calls
+FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
+WHERE Account_Type LIKE 'HCP' AND Successful_Call = 1 AND Target_Flag = 1
+GROUP BY REGION_NAME;
 ```
-and include aggregation for count by REGION_NAME as required.
 
-2) Errors  
-No errors found.
+2) Errors
+No errors found in existing flag logics.
 
-3) Quick Suggestions  
-- Improve column aliasing for clarity (avoid i.*, u.*, t.* in final SELECT).
-- Consider using WHERE for row filters to avoid large CASE statements.
-- Add indexes on key columns for join/lookup efficiency if not present.
+3) Quick Suggestions
+
+- Use consistent casing for column aliases and names.
+- Consider indexing REGION_NAME and Account_Type for reporting queries.
+- Use EXISTS instead of IN for large subqueries for efficiency.
 
 ## Git Blame
 ```
