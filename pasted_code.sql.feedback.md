@@ -4,8 +4,8 @@
 We have a created a stored procedure and created  few Flag columns in it. Pls chk those flag columns satisfy the logic given below.
  
  
-Detailed_Calls: Count of Call Id where Call_Type_vod__c= Detail /Group Detail from AIP_CRM_CALL_ACTIVITY to (Accounts , where IS_PERSON_ACCOUNT=1 from the AIP_ACCOUNT_DETAILS able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3 and Non-Target when the SEGMENT is Null.
-Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C like "PHRM". Sum of Calls (AIP_CRM_CALL_ACTIVITY join with AIP_ACCOUNT_DETAILS based on AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C= AIP_ACCOUNT_DETAILS.ID , where AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=0) for the selected time period.
+Detailed_Calls: Count of Call Id where Call_Type_vod__c= Detail /Group Detail from AIP_CRM_CALL_ACTIVITY to (Accounts , where IS_PERSON_ACCOUNT=True from the AIP_ACCOUNT_DETAILS able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3 and Non-Target when the SEGMENT is Null.
+Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C like "PHRM". Sum of Calls (AIP_CRM_CALL_ACTIVITY join with AIP_ACCOUNT_DETAILS based on AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C= AIP_ACCOUNT_DETAILS.ID , where AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=False) for the selected time period.
 CLM_Calls: Count distinct CALL2_VOD_C by joining AIP_CRM_CALL_ACTIVITY and AIP_CRM_CALL_KEYMESSAGE based on CALL2_VOD_C.AIP_CRM_CALL_KEYMESSAGE =Id.AIP_CRM_CALL_ACTIVITY for the selected time period.
 
 ## Uploaded Code
@@ -343,35 +343,23 @@ Execution blocked: Detected restricted keyword 'delete' in SQL. Execution blocke
 
 ## AI Feedback
 1) Corrections  
-- Change `DROP TABLE` to `TRUNCATE TABLE` for [AIP_G_CALLS_BASE_TBL] to avoid losing schema.
-- Fix logic in `Final.Pharmacy_Calls`: should join on `IS_PERSON_ACCOUNT=0` instead of string matching on Account_Type.
-- In `Detailed_Calls`, logic should strictly check for `Call_Type_vod__c IN ('Detail', 'Group Detail')` and `IS_PERSON_ACCOUNT=1`.
+- Remove hard DROP and CREATE of table inside stored procedure; use TRUNCATE TABLE if needed.  
+- Change all "LIKE '%Detail%'" to "IN ('Detail', 'Group Detail')" as per logic.  
+- Set 'Segment' to 'Non-Target' if NULL, not NULL as default.
 
 2) Errors  
-- Major error: `DROP TABLE` deletes the whole structure, not just data.  
-- Error in Detailed_Calls: Incorrectly uses pattern matching instead of exact values and does not filter by `IS_PERSON_ACCOUNT=1`.  
-- Error in Pharmacy_Calls: Matching on Account_Type is unreliable, should filter with `AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=0`.
+- Major error: Incorrect use of LIKE for 'Detail', which may match partial values.  
+- Missing logic: Non-Target should be set when Target segment is NULL.
 
 3) Quick Suggestions  
-- Use consistent naming (e.g., avoid both `Account_Type` and `Acc_Account_Type` unless necessary).  
-- Consider moving flag logic to a dedicated CTE for clarity and reuse.  
-- Remove unnecessary fields/joins to optimize performance.
+- Use set-based logic for flag columns to improve performance.  
+- Avoid SELECT * in INSERT statements: explicitly specify column list.  
+- Add proper error handling (e.g., TRY...CATCH) in procedure.  
 
-Example fixes:
+Example correction:
 ```sql
--- Replace
-
-DROP TABLE AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
-
--- With
-TRUNCATE TABLE AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
+CASE WHEN i.CALL_TYPE_VOD__C IN ('Detail', 'Group Detail') THEN 1 ELSE 0 END AS Detailed_Calls
 ```
-
-```sql
--- Replace Detailed_Calls logic with
-CASE WHEN i.CALL_TYPE_VOD__C IN ('Detail', 'Group Detail') AND a.IS_PERSON_ACCOUNT=1 THEN 1 ELSE 0 END AS Detailed_Calls
-```
-
 
 ## Git Blame
 ```
@@ -3846,16 +3834,16 @@ summary Code review for pasted_code.sql
 previous 8578b69fcc1ddd78f4cd68cfe3fc3853a5b644d7 pasted_code.sql
 filename pasted_code.sql
 			CASE
-0000000000000000000000000000000000000000 268 268 1
-author Not Committed Yet
-author-mail <not.committed.yet>
+53c1089cd2ccf2aab2f090f2e59dd23e1e37ace1 268 268 1
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1763459104
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1763459104
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 69351c7b960301007d45f64e894706da90435d50 pasted_code.sql
 filename pasted_code.sql
 	            WHEN i.ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%' and Account_Type LIKE 'HCO' THEN 1 
@@ -4080,16 +4068,16 @@ summary Code review for pasted_code.sql
 previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
 filename pasted_code.sql
 	 
-0000000000000000000000000000000000000000 286 286 1
-author Not Committed Yet
-author-mail <not.committed.yet>
+53c1089cd2ccf2aab2f090f2e59dd23e1e37ace1 286 286 1
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1763459104
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1763459104
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 69351c7b960301007d45f64e894706da90435d50 pasted_code.sql
 filename pasted_code.sql
 	Region  code
