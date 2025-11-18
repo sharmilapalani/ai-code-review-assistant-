@@ -5,7 +5,7 @@ We have a created a stored procedure and created  few Flag columns in it. Pls ch
 Detailed_Calls:  For field Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail , STAFF_ONLY like "False", Account_Type like "HCP",Team like "Field",
 For EC Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail,Team like "EC" from Call table to  Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
 Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%'. 
-CLM_Calls: Count of Calls which have ID in call key message table.
+CLM_Calls: Count of Calls which have ID in call key message table. In the blow code add a code to satisfy Successful_Calls_to_Target:count of calls from Calls table where CALL_ATTEMPT_RESULT=1 and Target_Flag=1
 
 ## Uploaded Code
 ```sql
@@ -348,9 +348,9 @@ No changes required.
 No errors found.
 
 3) Quick Suggestions  
-- Consider explicitly handling NULL values in flag columns for clarity.  
-- Use explicit Boolean type for flags if supported to improve readability.  
-- Clearly comment flag logic for future maintainability.
+- Use consistent naming for flags (e.g., avoid both Acc_Account_Type and Account_Type).
+- Remove redundant LEFT JOINs where possible to improve performance.
+- Consider using explicit CASE parenthesis for improved readability in complex flag conditions.
 
 ## Git Blame
 ```
