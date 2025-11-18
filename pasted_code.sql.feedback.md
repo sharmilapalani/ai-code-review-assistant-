@@ -2,10 +2,10 @@
 
 ## Description
 We have a created a stored procedure and created  few Flag columns in it. Pls chk those flag columns satisfy the logic given below.
-Detailed_Calls:  For field Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail , STAFF_ONLY like "False", Account_Type like "HCP",Team like "Field" from Call table to  Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
+Detailed_Calls:  For field Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail , STAFF_ONLY like "False", Account_Type like "HCP",Team like "Field",
 For EC Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail,Team like "EC" from Call table to  Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
 Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%'. 
-CLM_Calls: Count of Calls by joining Call Table and call key message table based on joining call table
+CLM_Calls: Count of Calls which have ID in call key message table.
 
 ## Uploaded Code
 ```sql
@@ -342,18 +342,15 @@ Execution blocked: Detected restricted keyword 'exec' in SQL. Execution blocked 
 
 ## AI Feedback
 1) Corrections  
-- The logic for the Detailed_Calls and EC Team Count is combined and does not distinctly group by AIP_ACCOUNT_TARGETS.SEGMENT for Team='Field' (HCP) and Team='EC' (EC), which is required.  
-- CLM_Calls should join to Call Key Message Table to count calls, but current logic only flags Presentation_ID_vod__c; needs to count distinct Call Id from join.  
-- Pharmacy_Calls logic correct for ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%' and Account_Type='HCO' — No changes required for this.
+No changes required.
 
 2) Errors  
-- Major error: Missing segmentation/grouping by AIP_ACCOUNT_TARGETS.SEGMENT for Team Count flags; flags not satisfying “group by Segment” requirement.  
-- Major error: CLM_Calls does not comply with logic; it should count based on a join with the Call Key Message table, not just set a flag using a column.
+No errors found.
 
 3) Quick Suggestions  
-- Consider splitting flag logic for Detailed_Calls and EC Team Count for clearer separation and aggregation.  
-- Use COUNT(*) OVER(PARTITION BY ...) for flags needing group counts rather than binary flags for reporting clarity.  
-- Simplify CASE statements using parentheses for correct logical precedence and improved readability.
+- Consider explicitly handling NULL values in flag columns for clarity.  
+- Use explicit Boolean type for flags if supported to improve readability.  
+- Clearly comment flag logic for future maintainability.
 
 ## Git Blame
 ```
