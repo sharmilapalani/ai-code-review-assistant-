@@ -281,43 +281,4 @@ END;
  
  
 Region  code
-EXEC AIP_FULL_COMMERCIAL.SPLoad_AIP_G_CALLS_BASE_TBL
-WITH 
-base_tbl AS (SELECT dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str AS TimePeriod, dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_rank FROM AIP_FULL_COMMERCIAL.Dim_config_date dt
-        WHERE (
-            (({{CDL_FA_TPC}} <> 'Custom' AND tp_Date BETWEEN {{CDL_FA_STARTDATE_HIDDEN}} AND {{CDL_FA_ENDDATE_HIDDEN}})
-         OR ({{CDL_FA_TPC}} = 'Custom' AND tp_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}))
-              )
-        GROUP BY dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str,dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_rank
-    ), 
-call_base AS (select {{CDL_FA_ROLE_PAR_GEO}},{{CDL_FA_ROLE_GEO}},Segment,ID,tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str AS TimePeriod FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
-    WHERE (
-            (({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE_HIDDEN}} AND {{CDL_FA_ENDDATE_HIDDEN}})
-         OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}))
-?         AND (Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
-?         AND (Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
-?         AND (REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
-?         AND (GEO_NUMBER= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
-?         AND (GEO_NUMBER= {{CDL_FA_REP}} or {{CDL_FA_REP}} = 'ALL' )
-?         AND (PRODUCT_CODE = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
-?         AND ({{CDL_FA_ACTIVITY_CALLS}} = 1)
-           ))
-SELECT COUNT(DISTINCT B.ID) AS Calls,T.TimePeriod,B.{{CDL_FA_ROLE_PAR_GEO}} AS Geography,Segment FROM base_tbl T
-LEFT JOIN call_base B ON T.TimePeriod = B.TimePeriod
-GROUP BY T.TimePeriod, B.{{CDL_FA_ROLE_PAR_GEO}},B.Segment
- 
-UNION
- 
-SELECT COUNT(DISTINCT B.ID) AS Calls,T.TimePeriod,B.{{CDL_FA_ROLE_GEO}} AS Geography,Segment FROM base_tbl T
-LEFT JOIN call_base B ON T.TimePeriod = B.TimePeriod
-GROUP BY T.TimePeriod, B.{{CDL_FA_ROLE_GEO}},B.Segment
- 
-UNION
- 
-SELECT COUNT(DISTINCT ID) AS Calls,NULL AS TimePeriod,{{CDL_FA_ROLE_PAR_GEO}} AS Geography ,Segment FROM call_base
-GROUP BY {{CDL_FA_ROLE_PAR_GEO}},Segment
- 
-UNION
- 
-SELECT COUNT(DISTINCT ID) AS Calls,NULL AS TimePeriod,{{CDL_FA_ROLE_GEO}} AS Geography,Segment FROM call_base
-GROUP BY {{CDL_FA_ROLE_GEO}},Segment
+Pls provide the region code based on above description

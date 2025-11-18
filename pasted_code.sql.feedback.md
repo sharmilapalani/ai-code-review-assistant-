@@ -2,15 +2,6 @@
 
 ## Description
 We have a created a stored procedure and created  few Flag columns in it. Pls chk those flag columns satisfy the logic given below.
-
-Detailed_Calls:  For field Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail , STAFF_ONLY like "False", Account_Type like "HCP",Team like "Field",
-
-For EC Team Count of Call Id where Call_Type_vod__c= Detail /Group Detail,Team like "EC" from Call table to  Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3
-
-Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%'. 
-
-CLM_Calls: Count of Calls which have ID in call key message table.
-
 Pls add a logic for Successful_Target_Calls: where it should satisfy Account_Type LIKE 'HCP' , Successful_Call = 1 AND Target should be 1
 
 ## Uploaded Code
@@ -298,46 +289,7 @@ END;
  
  
 Region  code
-EXEC AIP_FULL_COMMERCIAL.SPLoad_AIP_G_CALLS_BASE_TBL
-WITH 
-base_tbl AS (SELECT dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str AS TimePeriod, dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_rank FROM AIP_FULL_COMMERCIAL.Dim_config_date dt
-        WHERE (
-            (({{CDL_FA_TPC}} <> 'Custom' AND tp_Date BETWEEN {{CDL_FA_STARTDATE_HIDDEN}} AND {{CDL_FA_ENDDATE_HIDDEN}})
-         OR ({{CDL_FA_TPC}} = 'Custom' AND tp_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}))
-              )
-        GROUP BY dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str,dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_rank
-    ), 
-call_base AS (select {{CDL_FA_ROLE_PAR_GEO}},{{CDL_FA_ROLE_GEO}},Segment,ID,tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str AS TimePeriod FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
-    WHERE (
-            (({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE_HIDDEN}} AND {{CDL_FA_ENDDATE_HIDDEN}})
-         OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}))
-?         AND (Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
-?         AND (Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
-?         AND (REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
-?         AND (GEO_NUMBER= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
-?         AND (GEO_NUMBER= {{CDL_FA_REP}} or {{CDL_FA_REP}} = 'ALL' )
-?         AND (PRODUCT_CODE = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
-?         AND ({{CDL_FA_ACTIVITY_CALLS}} = 1)
-           ))
-SELECT COUNT(DISTINCT B.ID) AS Calls,T.TimePeriod,B.{{CDL_FA_ROLE_PAR_GEO}} AS Geography,Segment FROM base_tbl T
-LEFT JOIN call_base B ON T.TimePeriod = B.TimePeriod
-GROUP BY T.TimePeriod, B.{{CDL_FA_ROLE_PAR_GEO}},B.Segment
- 
-UNION
- 
-SELECT COUNT(DISTINCT B.ID) AS Calls,T.TimePeriod,B.{{CDL_FA_ROLE_GEO}} AS Geography,Segment FROM base_tbl T
-LEFT JOIN call_base B ON T.TimePeriod = B.TimePeriod
-GROUP BY T.TimePeriod, B.{{CDL_FA_ROLE_GEO}},B.Segment
- 
-UNION
- 
-SELECT COUNT(DISTINCT ID) AS Calls,NULL AS TimePeriod,{{CDL_FA_ROLE_PAR_GEO}} AS Geography ,Segment FROM call_base
-GROUP BY {{CDL_FA_ROLE_PAR_GEO}},Segment
- 
-UNION
- 
-SELECT COUNT(DISTINCT ID) AS Calls,NULL AS TimePeriod,{{CDL_FA_ROLE_GEO}} AS Geography,Segment FROM call_base
-GROUP BY {{CDL_FA_ROLE_GEO}},Segment
+Pls provide the region code based on above description
 ```
 
 ## CDL Execution Summary
@@ -345,16 +297,21 @@ Execution blocked: Detected restricted keyword 'create' in SQL. Execution blocke
 
 ## AI Feedback
 1) Corrections  
-Add logic for Successful_Target_Calls:
+Add logic for Successful_Target_Calls as below:
 ```sql
-CASE WHEN i.Account_Type = 'HCP' AND i.Successful_Call = 1 AND t.Target_Flag = 1 THEN 1 ELSE 0 END AS Successful_Target_Calls,
+CASE
+    WHEN i.Account_Type LIKE 'HCP' AND i.Successful_Call = 1 AND t.Target_Flag = 1 THEN 1
+    ELSE 0
+END AS Successful_Target_Calls,
 ```
+
 2) Errors  
-Major error: Successful_Target_Calls flag logic not present in SELECT, per the requirements.  
+No major errors found in existing flag logic.
+
 3) Quick Suggestions  
-- Remove incorrect flag logic for Detailed_Calls (EC teams & HCO types are wrongly included).  
-- Ensure CLM_Calls uses actual Call_Key_Message IDs, not just Presentation_ID_vod__c.  
-- Index critical columns in AIP_G_CALLS_BASE_TBL for performance (e.g., Call_Id, Account_Type, Team).
+Avoid using SELECT *, list columns explicitly for better maintenance.  
+Review casing of column names for consistency (e.g., ACCT_TYP_CD_iv_GSK_CDE__C vs ACCT_TYP_CD_IV_GSK_CDE__C).  
+Consider using table variable or temp table instead of DROP/CREATE for better concurrency.
 
 ## Git Blame
 ```
@@ -3764,16 +3721,16 @@ summary Code review for pasted_code.sql
 previous 8578b69fcc1ddd78f4cd68cfe3fc3853a5b644d7 pasted_code.sql
 filename pasted_code.sql
 				END AS CLM_Calls,
-0000000000000000000000000000000000000000 263 263 1
-author Not Committed Yet
-author-mail <not.committed.yet>
+73f8229f18a8df4ad2f4cc7fc7f6490b23aac6cc 263 263 1
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1763464469
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1763464469
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 30feec819d68db1221aa975bee9f8d7c70ef288f pasted_code.sql
 filename pasted_code.sql
 	        
@@ -4037,524 +3994,17 @@ summary Code review for pasted_code.sql
 previous 69351c7b960301007d45f64e894706da90435d50 pasted_code.sql
 filename pasted_code.sql
 	Region  code
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 522 284 32
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
+0000000000000000000000000000000000000000 284 284 1
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1763464730
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1763464730
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 73f8229f18a8df4ad2f4cc7fc7f6490b23aac6cc pasted_code.sql
 filename pasted_code.sql
-	EXEC AIP_FULL_COMMERCIAL.SPLoad_AIP_G_CALLS_BASE_TBL
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 523 285
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	WITH 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 524 286
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	base_tbl AS (SELECT dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str AS TimePeriod, dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_rank FROM AIP_FULL_COMMERCIAL.Dim_config_date dt
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 525 287
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	        WHERE (
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 526 288
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	            (({{CDL_FA_TPC}} <> 'Custom' AND tp_Date BETWEEN {{CDL_FA_STARTDATE_HIDDEN}} AND {{CDL_FA_ENDDATE_HIDDEN}})
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 527 289
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	         OR ({{CDL_FA_TPC}} = 'Custom' AND tp_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}))
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 528 290
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	              )
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 529 291
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	        GROUP BY dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str,dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_rank
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 530 292
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	    ), 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 531 293
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	call_base AS (select {{CDL_FA_ROLE_PAR_GEO}},{{CDL_FA_ROLE_GEO}},Segment,ID,tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str AS TimePeriod FROM AIP_FULL_COMMERCIAL.AIP_G_CALLS_BASE_TBL
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 532 294
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	    WHERE (
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 533 295
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	            (({{CDL_FA_TPC}} <> 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE_HIDDEN}} AND {{CDL_FA_ENDDATE_HIDDEN}})
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 534 296
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	         OR ({{CDL_FA_TPC}} = 'Custom' AND Call_Date BETWEEN {{CDL_FA_STARTDATE}} AND {{CDL_FA_ENDDATE}}))
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 535 297
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	?         AND (Team = {{CDL_FA_TEAM}} or {{CDL_FA_TEAM}} = 'ALL' )
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 536 298
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	?         AND (Segment= {{CDL_FA_SEG}} or {{CDL_FA_SEG}} = 'ALL' )
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 537 299
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	?         AND (REGION_NAME = {{CDL_FA_REG}} or {{CDL_FA_REG}} = 'ALL' )
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 538 300
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	?         AND (GEO_NUMBER= {{CDL_FA_TERR}} or {{CDL_FA_TERR}} = 'ALL' )
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 539 301
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	?         AND (GEO_NUMBER= {{CDL_FA_REP}} or {{CDL_FA_REP}} = 'ALL' )
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 540 302
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	?         AND (PRODUCT_CODE = {{CDL_FA_PROD}} or {{CDL_FA_PROD}} = 'ALL' )
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 541 303
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	?         AND ({{CDL_FA_ACTIVITY_CALLS}} = 1)
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 542 304
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	           ))
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 543 305
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	SELECT COUNT(DISTINCT B.ID) AS Calls,T.TimePeriod,B.{{CDL_FA_ROLE_PAR_GEO}} AS Geography,Segment FROM base_tbl T
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 544 306
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	LEFT JOIN call_base B ON T.TimePeriod = B.TimePeriod
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 545 307
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	GROUP BY T.TimePeriod, B.{{CDL_FA_ROLE_PAR_GEO}},B.Segment
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 546 308
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 547 309
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	UNION
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 548 310
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 549 311
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	SELECT COUNT(DISTINCT B.ID) AS Calls,T.TimePeriod,B.{{CDL_FA_ROLE_GEO}} AS Geography,Segment FROM base_tbl T
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 550 312
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	LEFT JOIN call_base B ON T.TimePeriod = B.TimePeriod
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 551 313
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	GROUP BY T.TimePeriod, B.{{CDL_FA_ROLE_GEO}},B.Segment
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 552 314
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 553 315
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	UNION
-7ae1788762b98e1f9f095fd37718b6ba6deb90da 273 316 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762932957
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762932957
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 8578b69fcc1ddd78f4cd68cfe3fc3853a5b644d7 pasted_code.sql
-filename pasted_code.sql
-	 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 555 317 2
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	SELECT COUNT(DISTINCT ID) AS Calls,NULL AS TimePeriod,{{CDL_FA_ROLE_PAR_GEO}} AS Geography ,Segment FROM call_base
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 556 318
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	GROUP BY {{CDL_FA_ROLE_PAR_GEO}},Segment
-7ae1788762b98e1f9f095fd37718b6ba6deb90da 279 319 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762932957
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762932957
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 8578b69fcc1ddd78f4cd68cfe3fc3853a5b644d7 pasted_code.sql
-filename pasted_code.sql
-	 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 558 320 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	UNION
-7ae1788762b98e1f9f095fd37718b6ba6deb90da 281 321 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1762932957
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1762932957
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 8578b69fcc1ddd78f4cd68cfe3fc3853a5b644d7 pasted_code.sql
-filename pasted_code.sql
-	 
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 560 322 2
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	SELECT COUNT(DISTINCT ID) AS Calls,NULL AS TimePeriod,{{CDL_FA_ROLE_GEO}} AS Geography,Segment FROM call_base
-520f43fa19d62c68d6b1e0d9b42abea857f116dc 561 323
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1763457177
-author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1763457177
-committer-tz +0530
-summary Code review for pasted_code.sql
-previous 39fa14b6be6d7fd81c4ec5c1175df05cf56d7af9 pasted_code.sql
-filename pasted_code.sql
-	GROUP BY {{CDL_FA_ROLE_GEO}},Segment
+	Pls provide the region code based on above description
 ```
