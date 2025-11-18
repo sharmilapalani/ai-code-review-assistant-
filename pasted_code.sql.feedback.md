@@ -4,7 +4,7 @@
 We have a created a stored procedure and created  few Flag columns in it. Pls chk those flag columns satisfy the logic given below.
  
  
-Detailed_Calls: Count of Call Id where Call_Type_vod__c= Detail /Group Detail from AIP_CRM_CALL_ACTIVITY to (Accounts , where IS_PERSON_ACCOUNT=True from the AIP_ACCOUNT_DETAILS able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3 and Non-Target when the SEGMENT is Null.
+Detailed_Calls: Count of Call Id where Call_Type_vod__c= Detail /Group Detail from AIP_CRM_CALL_ACTIVITY to (Accounts , where IS_PERSON_ACCOUNT=True from the AIP_ACCOUNT_DETAILS able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3.
 Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C like "PHRM". Sum of Calls (AIP_CRM_CALL_ACTIVITY join with AIP_ACCOUNT_DETAILS based on AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C= AIP_ACCOUNT_DETAILS.ID , where AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=False) for the selected time period.
 CLM_Calls: Count distinct CALL2_VOD_C by joining AIP_CRM_CALL_ACTIVITY and AIP_CRM_CALL_KEYMESSAGE based on CALL2_VOD_C.AIP_CRM_CALL_KEYMESSAGE =Id.AIP_CRM_CALL_ACTIVITY for the selected time period.
 
@@ -342,23 +342,26 @@ GROUP BY {{CDL_FA_ROLE_GEO}},Segment
 Execution blocked: Detected restricted keyword 'delete' in SQL. Execution blocked for safety.
 
 ## AI Feedback
-1) Corrections  
-- Remove hard DROP and CREATE of table inside stored procedure; use TRUNCATE TABLE if needed.  
-- Change all "LIKE '%Detail%'" to "IN ('Detail', 'Group Detail')" as per logic.  
-- Set 'Segment' to 'Non-Target' if NULL, not NULL as default.
+1) Corrections
+- Change DROP TABLE to TRUNCATE or DELETE FROM to avoid dropping structure before CREATE.
+- Fix 'ACCT_TYP_CD_iv_GSK_CDE__C' casing to match source column 'ACCT_TYP_CD_IV_GSK_CDE__C' for Pharmacy_Calls.
 
-2) Errors  
-- Major error: Incorrect use of LIKE for 'Detail', which may match partial values.  
-- Missing logic: Non-Target should be set when Target segment is NULL.
+2) Errors
+- Major error: You have both DROP TABLE and CREATE TABLE with identical names—this deletes the structure. Use TRUNCATE or DELETE.
+- Logical error in Detailed_Calls: Needs to check a.ISPERSONACCOUNT = 'True' for person accounts, but logic uses HCP/HCO conversion. Also, Pharmacy_Calls compares on Account_Type instead of ISPERSONACCOUNT.
 
-3) Quick Suggestions  
-- Use set-based logic for flag columns to improve performance.  
-- Avoid SELECT * in INSERT statements: explicitly specify column list.  
-- Add proper error handling (e.g., TRY...CATCH) in procedure.  
+3) Quick Suggestions
+- Use explicit JOINs with ISPERSONACCOUNT for clarity (instead of inferring with Account_Type).
+- Use COUNT(*) aggregates for flag columns in final SELECT to actually count, not just set 1/0 per row.
+- Add comments for logic in flag columns for maintainability.
 
-Example correction:
+Example for Pharmacy_Calls:
 ```sql
-CASE WHEN i.CALL_TYPE_VOD__C IN ('Detail', 'Group Detail') THEN 1 ELSE 0 END AS Detailed_Calls
+CASE
+    WHEN i.ACCT_TYP_CD_IV_GSK_CDE__C LIKE '%PHRM%'
+      AND i.ISPERSONACCOUNT = 'False' THEN 1
+    ELSE 0
+END AS Pharmacy_Calls,
 ```
 
 ## Git Blame
