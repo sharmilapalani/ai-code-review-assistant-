@@ -260,10 +260,7 @@ Final AS (
             WHEN i.Presentation_ID_vod__c <> '' AND i.Account_Type = 'HCP'  THEN 1 
 			ELSE 0 
 			END AS CLM_Calls,
-         CASE
-            WHEN i.Account_Type LIKE 'HCP' AND i.Successful_Call = 1 AND t.Target_Flag = 1 THEN 1 
-			ELSE 0 
-			END AS Successful_Target_Calls,
+        
 		CASE
             WHEN i.ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%' and Account_Type LIKE 'HCO' THEN 1 
 			ELSE 0 
