@@ -5,7 +5,7 @@ We have a created a stored procedure and created  few Flag columns in it. Pls ch
  
  
 Detailed_Calls: Count of Call Id where Call_Type_vod__c= Detail /Group Detail from AIP_CRM_CALL_ACTIVITY to (Accounts , where IS_PERSON_ACCOUNT=True from the AIP_ACCOUNT_DETAILS able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3.
-Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C like "PHRM". Sum of Calls (AIP_CRM_CALL_ACTIVITY join with AIP_ACCOUNT_DETAILS based on AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C= AIP_ACCOUNT_DETAILS.ID , where AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=False) for the selected time period.
+Pharmacy_Calls: Pharmacy call is HCO Calls. Sum of Calls (AIP_CRM_CALL_ACTIVITY join with AIP_ACCOUNT_DETAILS based on AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C= AIP_ACCOUNT_DETAILS.ID , where AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=False) for the selected time period.
 CLM_Calls: Count distinct CALL2_VOD_C by joining AIP_CRM_CALL_ACTIVITY and AIP_CRM_CALL_KEYMESSAGE based on CALL2_VOD_C.AIP_CRM_CALL_KEYMESSAGE =Id.AIP_CRM_CALL_ACTIVITY for the selected time period.
 
 ## Uploaded Code
@@ -342,16 +342,21 @@ GROUP BY {{CDL_FA_ROLE_GEO}},Segment
 Execution blocked: Detected restricted keyword 'exec' in SQL. Execution blocked for safety.
 
 ## AI Feedback
-1) Corrections  
-No changes required.
+1) Corrections —
+Pharmacy_Calls logic is incorrect; should sum calls where IS_PERSON_ACCOUNT = False (not using LIKE '%PHRM%').
+Detailed_Calls logic is partially correct but missing Group Detail condition and segment grouping.
+CLM_Calls logic should count distinct CALL2_VOD__C after joining with keymessage table for selected period.
+Example correction (Pharmacy_Calls):
+```sql
+CASE WHEN i.Account_Type = 'HCO' AND i.IS_PERSON_ACCOUNT = 'False' THEN 1 ELSE 0 END AS Pharmacy_Calls
+```
 
-2) Errors  
-No errors found.
+2) Errors —
+Major logic mismatches in Pharmacy_Calls and Detailed_Calls flags as per requirements.
 
-3) Quick Suggestions  
-- Use consistent casing for column aliases (e.g., Account_Type vs Account_Type_vod__c).  
-- Add comments above flag columns logic for better readability.  
-- Consider splitting complex CASE logic into separate CTEs for maintainability.
+3) Quick Suggestions —
+Use explicit period filters in subqueries for accurate counts.
+Avoid ambiguous column usages and ensure joins with necessary conditions for correct flag classifications.
 
 ## Git Blame
 ```
