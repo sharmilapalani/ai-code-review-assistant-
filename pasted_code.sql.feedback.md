@@ -3,10 +3,9 @@
 ## Description
 We have a created a stored procedure and created  few Flag columns in it. Pls chk those flag columns satisfy the logic given below.
  
- 
-Detailed_Calls: Count of Call Id where Call_Type_vod__c= Detail /Group Detail from AIP_CRM_CALL_ACTIVITY to (Accounts , where IS_PERSON_ACCOUNT=True from the AIP_ACCOUNT_DETAILS able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3.
-Pharmacy_Calls: Pharmacy call is HCO Calls. Sum of Calls (AIP_CRM_CALL_ACTIVITY join with AIP_ACCOUNT_DETAILS based on AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C= AIP_ACCOUNT_DETAILS.ID , where AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=False) for the selected time period.
-CLM_Calls: Count distinct CALL2_VOD_C by joining AIP_CRM_CALL_ACTIVITY and AIP_CRM_CALL_KEYMESSAGE based on CALL2_VOD_C.AIP_CRM_CALL_KEYMESSAGE =Id.AIP_CRM_CALL_ACTIVITY for the selected time period.
+Detailed_Calls: Count of Call Id where Call_Type_vod__c= Detail /Group Detail from Call table to (Accounts , where IS_PERSON_ACCOUNT=True from the AIP_ACCOUNT_DETAILS able) Group by AIP_ACCOUNT_TARGETS.SEGMENT = Tier1, Tier2, Tier3.
+Pharmacy_Calls: Pharmacy call is HCO Calls and ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%'. Sum of Calls (AIP_CRM_CALL_ACTIVITY join with AIP_ACCOUNT_DETAILS based on AIP_CRM_CALL_ACTIVITY.ACCOUNT_VOD__C= AIP_ACCOUNT_DETAILS.ID , where AIP_ACCOUNT_DETAILS.IS_PERSON_ACCOUNT=False) for the selected time period.
+CLM_Calls: Count distinct CALL2_VOD_C by joining Call Table and AIP_CRM_CALL_KEYMESSAGE based on joining call table
 
 ## Uploaded Code
 ```sql
@@ -342,21 +341,26 @@ GROUP BY {{CDL_FA_ROLE_GEO}},Segment
 Execution blocked: Detected restricted keyword 'exec' in SQL. Execution blocked for safety.
 
 ## AI Feedback
-1) Corrections —
-Pharmacy_Calls logic is incorrect; should sum calls where IS_PERSON_ACCOUNT = False (not using LIKE '%PHRM%').
-Detailed_Calls logic is partially correct but missing Group Detail condition and segment grouping.
-CLM_Calls logic should count distinct CALL2_VOD__C after joining with keymessage table for selected period.
-Example correction (Pharmacy_Calls):
-```sql
-CASE WHEN i.Account_Type = 'HCO' AND i.IS_PERSON_ACCOUNT = 'False' THEN 1 ELSE 0 END AS Pharmacy_Calls
-```
+1) Corrections  
+- Detailed_Calls flag: Should only count if Call_Type_vod__c IN ('Detail', 'Group Detail') AND Account_Type='HCP' AND IS_PERSON_ACCOUNT=True, but current logic allows fields not matching 'Detail/Group Detail' and for HCOs, which is wrong.  
+  Correction:
+  ```sql
+  CASE
+    WHEN i.CALL_TYPE_VOD__C IN ('Detail', 'Group Detail') AND i.Account_Type = 'HCP' THEN 1
+    ELSE 0
+  END AS Detailed_Calls
+  ```
+- Pharmacy_Calls: Logic correct (HCO + ACCT_TYP_CD_iv_GSK_CDE__C LIKE '%PHRM%').  
+- CLM_Calls: Logic correct (distinct CALL2_VOD__C via keymessage join).
 
-2) Errors —
-Major logic mismatches in Pharmacy_Calls and Detailed_Calls flags as per requirements.
+2) Errors  
+- Major logic error in Detailed_Calls flag: includes HCOs and wrong call types.
+- No errors found for Pharmacy_Calls or CLM_Calls.
 
-3) Quick Suggestions —
-Use explicit period filters in subqueries for accurate counts.
-Avoid ambiguous column usages and ensure joins with necessary conditions for correct flag classifications.
+3) Quick Suggestions  
+- Use standard boolean fields instead of strings for flags.
+- Move flag calculations to a subquery for readability.
+- Add comments to clarify logic where business mappings are complex.
 
 ## Git Blame
 ```
