@@ -518,7 +518,7 @@ FROM Final;
 END;
  
  
-Region  code
+Region  code:
 EXEC AIP_FULL_COMMERCIAL.SPLoad_AIP_G_CALLS_BASE_TBL
 WITH 
 base_tbl AS (SELECT dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_str AS TimePeriod, dt.tp_{{CDL_FA_TPC_OVERTIME_HIDDEN}}_rank FROM AIP_FULL_COMMERCIAL.Dim_config_date dt
