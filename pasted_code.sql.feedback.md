@@ -1,7 +1,8 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
-Please Validate my code based on Below JIRA, I have used stored procedure as well, Country and  Product is defaultly selected in dashboard
+Please Validate my code based on Below JIRA, I have used stored procedure as well, Country and  Product is defaultly selected in dashboard it will be restricted when i use global parameters {{G_FI_CDL_TIMEPERIOD}}
+{{G_FI_CDL_ALL_FILTERS}}
 Total Sales Volume (Units):
 
 SELECT
@@ -80,25 +81,24 @@ SELECT Geography AS {{CDL_FA_REGION_TITLE_CHG}},Units FROM FINAL;
 ⚠️ Execution error: ('42000', '[42000] [Microsoft][ODBC Driver 17 for SQL Server]Syntax error, permission violation, or other nonspecific error (0) (SQLExecDirectW)')
 
 ## AI Feedback
-1) Corrections
-Errors in GROUP BY usage and filter logic do not accurately replicate original requirements. Example fix:
-```sql
-SELECT
-    SUM(a.NRTL_UNITS) AS TOTAL_UNITS,
-    b.Country
-FROM AIP_NON_RETAIL_SALES a
-INNER JOIN AIP_ACCOUNT_DETAILS b ON a.CID = b.ID
-INNER JOIN AIP_HCO_UNIVERSE c ON b.ID = c.CID
-WHERE a.COUNTRY = 'Germany' AND a.PROD = 'KIMMTRAK'
-GROUP BY b.Country
-```
-2) Errors
-Major error: Logic does not filter by country/product or use AIP_NON_RETAIL_SALES table as originally required.
+1) Corrections  
+Change WHERE filter logic: filter specifically for COUNTRY = 'Germany' AND PROD = 'KIMMTRAK' as per the description. Example:
 
-3) Quick Suggestions
-- Simplify CTEs to only aggregate by Country/Product.
-- Remove unused variables and CASE statements for clarity.
-- Ensure use of intended sales table columns for correct volume calculation.
+```sql
+WHERE COUNTRY = 'Germany' 
+  AND PROD = 'KIMMTRAK'
+  AND ({{G_FI_CDL_TIMEPERIOD}}) 
+  AND ({{G_FI_CDL_ALL_FILTERS}})
+```
+
+2) Errors  
+Stored procedure/CTE does not restrict by required COUNTRY/PROD.  
+Aggregations do not match—should return SUM of NRTL_UNITS as TOTAL_UNITS.
+
+3) Quick Suggestions  
+- Remove unused columns/CTEs to improve readability.  
+- Ensure correct GROUP BY (should only use Country, not extra columns).  
+- Remove ambiguous CASE logic for role columns unless documented necessity.
 
 ## Git Blame
 ```
