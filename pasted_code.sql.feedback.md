@@ -1,8 +1,8 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
-Please Validate my code based on Below JIRA, I have used stored procedure as well, Country and  Product is defaultly selected in dashboard it will be restricted when i use global parameters {{G_FI_CDL_TIMEPERIOD}}
-{{G_FI_CDL_ALL_FILTERS}}
+Please Validate my code based on Below JIRA, I have used stored procedure as well, global parameters {{G_FI_CDL_TIMEPERIOD}}
+{{G_FI_CDL_ALL_FILTERS}} will check for all the Product, Country and Time Period selected in the dashboard
 Total Sales Volume (Units):
 
 SELECT
@@ -81,24 +81,25 @@ SELECT Geography AS {{CDL_FA_REGION_TITLE_CHG}},Units FROM FINAL;
 ⚠️ Execution error: ('42000', '[42000] [Microsoft][ODBC Driver 17 for SQL Server]Syntax error, permission violation, or other nonspecific error (0) (SQLExecDirectW)')
 
 ## AI Feedback
-1) Corrections  
-Change WHERE filter logic: filter specifically for COUNTRY = 'Germany' AND PROD = 'KIMMTRAK' as per the description. Example:
-
+1) Corrections
+- The logic does not match the description. Your code uses SUM(Sales) from AIP_G_SALES_BASE without any filters for COUNTRY = 'Germany' or PROD = 'KIMMTRAK', nor does it use NRTL_UNITS from AIP_NON_RETAIL_SALES. Correction example:
 ```sql
-WHERE COUNTRY = 'Germany' 
-  AND PROD = 'KIMMTRAK'
-  AND ({{G_FI_CDL_TIMEPERIOD}}) 
-  AND ({{G_FI_CDL_ALL_FILTERS}})
+SELECT SUM(a.NRTL_UNITS) AS TOTAL_UNITS, b.Country
+FROM AIP_NON_RETAIL_SALES a
+INNER JOIN AIP_ACCOUNT_DETAILS b ON a.CID = b.ID
+INNER JOIN AIP_HCO_UNIVERSE c ON b.ID = c.CID
+WHERE a.COUNTRY = 'Germany' AND a.PROD = 'KIMMTRAK'
+GROUP BY b.Country;
 ```
 
-2) Errors  
-Stored procedure/CTE does not restrict by required COUNTRY/PROD.  
-Aggregations do not match—should return SUM of NRTL_UNITS as TOTAL_UNITS.
+2) Errors
+- Major mismatch: Source tables, filters, and aggregation columns do not align with description.
+- 'SALES' CTE does not reflect provided business logic.
 
-3) Quick Suggestions  
-- Remove unused columns/CTEs to improve readability.  
-- Ensure correct GROUP BY (should only use Country, not extra columns).  
-- Remove ambiguous CASE logic for role columns unless documented necessity.
+3) Quick Suggestions
+- Align source tables and fields as per business requirement.
+- Use dashboard global parameters to filter Product, Country, Time Period directly in WHERE clause.
+- Remove unnecessary UNION logic if not needed for simple aggregation.
 
 ## Git Blame
 ```
