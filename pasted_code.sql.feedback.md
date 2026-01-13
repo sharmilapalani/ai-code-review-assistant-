@@ -1,7 +1,7 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
-Please Validate my code based on Below JIRA, I have used stored procedure as well chk for that code EUROPE_FIELD_INTELLIGENCE.SPLoad_AIP_G_SALES_BASE, global parameters {{G_FI_CDL_TIMEPERIOD}}
+Please Validate my code based on Below JIRA, I have used stored procedure as well chk for that code EUROPE_FIELD_INTELLIGENCE.SPLoad_AIP_G_SALES_BASE to create base table EUROPE_FIELD_INTELLIGENCE.AIP_G_SALES_BASE, global parameters {{G_FI_CDL_TIMEPERIOD}}
 {{G_FI_CDL_ALL_FILTERS}} will check for all the Product, Country and Time Period selected in the dashboard
 Total Sales Volume (Units):
 
@@ -82,27 +82,27 @@ SELECT Geography AS {{CDL_FA_REGION_TITLE_CHG}},Units FROM FINAL;
 
 ## AI Feedback
 1) Corrections  
-Change all references from SUM(Sales) to SUM(NRTL_UNITS). Update the FROM clause to join EUROPE_FIELD_INTELLIGENCE.AIP_G_SALES_BASE with AIP_ACCOUNT_DETAILS and AIP_HCO_UNIVERSE on CID and ID, as per the logic in the description. Apply filters for Country = 'Germany' and PROD = 'KIMMTRAK'. Example:
-
-```sql
-SELECT
-    SUM(a.NRTL_UNITS) AS TOTAL_UNITS,
-    b.COUNTRY
-FROM EUROPE_FIELD_INTELLIGENCE.AIP_G_SALES_BASE a
-JOIN AIP_ACCOUNT_DETAILS b ON a.CID = b.ID
-JOIN AIP_HCO_UNIVERSE c ON b.ID = c.CID
-WHERE a.COUNTRY = 'Germany'
-  AND a.PROD = 'KIMMTRAK'
-GROUP BY b.COUNTRY
-```
+GROUP BY clause in SALES CTE uses nat,reg, but SELECT does not include them. Include nat, reg in SELECT for valid grouping. Use SUM(NRTL_UNITS) instead of SUM(Sales) if matching the base logic.
 
 2) Errors  
-Major logic mismatch: You are summing "Sales" instead of "NRTL_UNITS" and missing required joins and filters for COUNTRY and PROD.
+Major logic mismatch: Stored procedure must filter by COUNTRY and PROD; current code ignores these specifics.
+Wrong aggregation logic; original sums NRTL_UNITS after joining across three tables, your code takes SUM(Sales) solely from the base table.  
+Missing join to ACCOUNT and HCO_UNIVERSE for CRM logic.
 
 3) Quick Suggestions  
-- Use explicit JOINs for clarity and accuracy.
-- Match the filter fields and aggregation exactly as described.
-- Remove redundant or unclear CASE statements from the CTE for better readability.
+Add JOINs to AIP_ACCOUNT_DETAILS, AIP_HCO_UNIVERSE for CRM data consistency.  
+Add explicit filters for COUNTRY and PROD.  
+Define role logic only after ensuring correct groupings.
+
+Corrected code:  
+```sql
+SELECT SUM(a.NRTL_UNITS) AS TOTAL_UNITS, b.Country
+FROM EUROPE_FIELD_INTELLIGENCE.AIP_G_SALES_BASE a
+INNER JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_DETAILS b ON a.CID = b.ID
+INNER JOIN EUROPE_FIELD_INTELLIGENCE.AIP_HCO_UNIVERSE c ON b.ID = c.CID
+WHERE a.Country = 'Germany' AND a.Prod = 'KIMMTRAK'
+GROUP BY b.Country;
+```
 
 ## Git Blame
 ```
