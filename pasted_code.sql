@@ -16,7 +16,7 @@ WITH
 SALES AS (SELECT 
 {{CDL_FA_ROLE_PAR_GEO}} AS Parent,
 {{CDL_FA_ROLE_GEO}} as Child,
- SUM(Sales) AS Sales,
+ SUM(Account_id) AS Sales,
         CASE 
             WHEN LEN('{{CDL_FA_REG}}') > 0 THEN REG
             WHEN LEN('{{CDL_FA_TERR}}') > 0 THEN 1

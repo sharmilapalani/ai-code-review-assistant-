@@ -38,7 +38,7 @@ WITH
 SALES AS (SELECT 
 {{CDL_FA_ROLE_PAR_GEO}} AS Parent,
 {{CDL_FA_ROLE_GEO}} as Child,
- SUM(Sales) AS Sales,
+ SUM(Account_id) AS Sales,
         CASE 
             WHEN LEN('{{CDL_FA_REG}}') > 0 THEN REG
             WHEN LEN('{{CDL_FA_TERR}}') > 0 THEN 1
@@ -82,19 +82,24 @@ SELECT Geography AS {{CDL_FA_REGION_TITLE_CHG}},Units FROM FINAL;
 
 ## AI Feedback
 1) Corrections  
-No changes required.
+Remove SUM(Account_id) and replace with SUM(NRTL_UNITS) per your logic description. Ensure fields used in SELECT/CASE exist in the table. Example:  
+```sql
+SUM(NRTL_UNITS) AS Sales
+```
+No changes required for stored procedure logic as per your request.
 
 2) Errors  
-No errors found.
+Major error: SUM(Account_id) is incorrect as per requirement (should be sales volume/units, i.e., SUM(NRTL_UNITS)).  
+Field/alias mismatches may cause invalid columns (e.g., REG, NAT, Account_id).
 
 3) Quick Suggestions  
-- Remove redundant parenthesis in the WHERE clause for clarity.  
-- Ensure global parameters expand to valid SQL for reliable execution.  
-- Add comments to clarify logic blocks for future reviewers.
+- Replace raw parameter injection with safer variable binding to avoid SQL errors.  
+- Simplify CASE logic—check column presence before using.  
+- Ensure GROUP BY contains only valid fields from base table.
 
 ## Git Blame
 ```
-3dd3c9acea7078bb9723fd1754c9e45743969b27 1 1 52
+3dd3c9acea7078bb9723fd1754c9e45743969b27 1 1 18
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1768317452
@@ -328,20 +333,20 @@ summary Code review for pasted_code.sql
 previous 1632917db53336b13358985e002c546d160e996d pasted_code.sql
 filename pasted_code.sql
 	{{CDL_FA_ROLE_GEO}} as Child,
-3dd3c9acea7078bb9723fd1754c9e45743969b27 19 19
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1768317452
+0000000000000000000000000000000000000000 19 19 1
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1768319166
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1768317452
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1768319166
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 1632917db53336b13358985e002c546d160e996d pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous be53c0cbe8426870d053770360471e553567671c pasted_code.sql
 filename pasted_code.sql
-	 SUM(Sales) AS Sales,
-3dd3c9acea7078bb9723fd1754c9e45743969b27 20 20
+	 SUM(Account_id) AS Sales,
+3dd3c9acea7078bb9723fd1754c9e45743969b27 20 20 33
 author a241983
 author-mail <a241983@LWPG02MPMR>
 author-time 1768317452
