@@ -1,7 +1,7 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
-Please Validate my code based on Below JIRA, I have used stored procedure as well, global parameters {{G_FI_CDL_TIMEPERIOD}}
+Please Validate my code based on Below JIRA, I have used stored procedure as well chk for that code EUROPE_FIELD_INTELLIGENCE.SPLoad_AIP_G_SALES_BASE, global parameters {{G_FI_CDL_TIMEPERIOD}}
 {{G_FI_CDL_ALL_FILTERS}} will check for all the Product, Country and Time Period selected in the dashboard
 Total Sales Volume (Units):
 
@@ -81,25 +81,28 @@ SELECT Geography AS {{CDL_FA_REGION_TITLE_CHG}},Units FROM FINAL;
 ⚠️ Execution error: ('42000', '[42000] [Microsoft][ODBC Driver 17 for SQL Server]Syntax error, permission violation, or other nonspecific error (0) (SQLExecDirectW)')
 
 ## AI Feedback
-1) Corrections
-- The logic does not match the description. Your code uses SUM(Sales) from AIP_G_SALES_BASE without any filters for COUNTRY = 'Germany' or PROD = 'KIMMTRAK', nor does it use NRTL_UNITS from AIP_NON_RETAIL_SALES. Correction example:
+1) Corrections  
+Change all references from SUM(Sales) to SUM(NRTL_UNITS). Update the FROM clause to join EUROPE_FIELD_INTELLIGENCE.AIP_G_SALES_BASE with AIP_ACCOUNT_DETAILS and AIP_HCO_UNIVERSE on CID and ID, as per the logic in the description. Apply filters for Country = 'Germany' and PROD = 'KIMMTRAK'. Example:
+
 ```sql
-SELECT SUM(a.NRTL_UNITS) AS TOTAL_UNITS, b.Country
-FROM AIP_NON_RETAIL_SALES a
-INNER JOIN AIP_ACCOUNT_DETAILS b ON a.CID = b.ID
-INNER JOIN AIP_HCO_UNIVERSE c ON b.ID = c.CID
-WHERE a.COUNTRY = 'Germany' AND a.PROD = 'KIMMTRAK'
-GROUP BY b.Country;
+SELECT
+    SUM(a.NRTL_UNITS) AS TOTAL_UNITS,
+    b.COUNTRY
+FROM EUROPE_FIELD_INTELLIGENCE.AIP_G_SALES_BASE a
+JOIN AIP_ACCOUNT_DETAILS b ON a.CID = b.ID
+JOIN AIP_HCO_UNIVERSE c ON b.ID = c.CID
+WHERE a.COUNTRY = 'Germany'
+  AND a.PROD = 'KIMMTRAK'
+GROUP BY b.COUNTRY
 ```
 
-2) Errors
-- Major mismatch: Source tables, filters, and aggregation columns do not align with description.
-- 'SALES' CTE does not reflect provided business logic.
+2) Errors  
+Major logic mismatch: You are summing "Sales" instead of "NRTL_UNITS" and missing required joins and filters for COUNTRY and PROD.
 
-3) Quick Suggestions
-- Align source tables and fields as per business requirement.
-- Use dashboard global parameters to filter Product, Country, Time Period directly in WHERE clause.
-- Remove unnecessary UNION logic if not needed for simple aggregation.
+3) Quick Suggestions  
+- Use explicit JOINs for clarity and accuracy.
+- Match the filter fields and aggregation exactly as described.
+- Remove redundant or unclear CASE statements from the CTE for better readability.
 
 ## Git Blame
 ```
