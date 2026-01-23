@@ -12,22 +12,21 @@ Join AIP_CRM_CALL_ACTIVITY with AIP_ACCOUNT_TARGETS with account and Territory a
 Execution blocked: Only read-only queries starting with SELECT or WITH are allowed to be executed against CDL.
 
 ## AI Feedback
-1) Corrections  
+1) Corrections —
 ```sql
-SELECT c.Country, COUNT(*) AS TargetedCallCount
-FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY c
-INNER JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS t
-  ON c.Account = t.Account AND c.Territory = t.Territory
-GROUP BY c.Country;
+SELECT at.COUNTRY, COUNT(ca.CALL_ID) AS NUM_TARGETED_CALLS
+FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY ca
+INNER JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS at
+  ON ca.ACCOUNT_ID = at.ACCOUNT_ID AND ca.TERRITORY = at.TERRITORY
+GROUP BY at.COUNTRY;
 ```
 
-2) Errors  
+2) Errors —
 No errors found.
 
-3) Quick Suggestions  
-- Use explicit table aliases for readability.
-- Consider filtering for only targeted calls if status/flag column exists.
-- Validate that 'Country' exists in AIP_CRM_CALL_ACTIVITY.
+3) Quick Suggestions —
+- Ensure CALL_ID uniquely identifies a call for accurate counting.
+- Prefer explicit table aliases for clarity.
 
 ## Git Blame
 ```
