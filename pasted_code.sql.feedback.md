@@ -12,29 +12,16 @@ Join AIP_CRM_CALL_ACTIVITY with AIP_ACCOUNT_TARGETS with account and Territory a
 Execution blocked: Only read-only queries starting with SELECT or WITH are allowed to be executed against CDL.
 
 ## AI Feedback
-1) Corrections  
-- No SQL code was provided. Generating SQL based on schema validation.
+1) Corrections —
+You must provide the schema (columns) for AIP_CRM_CALL_ACTIVITY and AIP_ACCOUNT_TARGETS before SQL code can be written. "Country" must be validated—if not available, derive only if possible using correct join.
 
-2) Errors  
-- No errors found (since only a request for SQL generation).
+2) Errors —
+Missing schema; cannot generate code or review logic.
 
-3) Quick Suggestions  
-- Ensure COUNTRY is derived/joined from a Geography or Account-related table if not present.
-- Join on existing ACCOUNT_ID and TERRITORY_ID columns only.
-- Count only targeted calls (if there is a relevant 'targeted' field; otherwise, just count calls per join logic).
-
-Example SQL:
-```sql
-SELECT g.COUNTRY, COUNT(*) AS num_targeted_calls
-FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY ca
-JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS at 
-  ON ca.ACCOUNT_ID = at.ACCOUNT_ID AND ca.TERRITORY_ID = at.TERRITORY_ID
-JOIN EUROPE_FIELD_INTELLIGENCE.ACCOUNT acc
-  ON ca.ACCOUNT_ID = acc.ACCOUNT_ID
-JOIN EUROPE_FIELD_INTELLIGENCE.GEOGRAPHY g
-  ON acc.GEOGRAPHY_ID = g.GEOGRAPHY_ID
-GROUP BY g.COUNTRY;
-```
+3) Quick Suggestions —
+- List all columns in each table.
+- Specify location of "country" field.
+- Show joinable keys for Account and Territory.
 
 ## Git Blame
 ```
