@@ -1,11 +1,11 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
-To join the call table AIP_CRM_CALL_ACTIVITY with Target Table AIP_ACCOUNT_TARGETS to get the count of targeted calls by Territory in EUROPE_FIELD_INTELLIGENCE schema
+Join AIP_CRM_CALL_ACTIVITY with AIP_ACCOUNT_TARGETS with account and Territory as a key to find no of targeted calls by country
 
 ## Uploaded Code
 ```sql
-give me the correct code
+give the code
 ```
 
 ## CDL Execution Summary
@@ -13,35 +13,28 @@ Execution blocked: Only read-only queries starting with SELECT or WITH are allow
 
 ## AI Feedback
 1) Corrections  
-```sql
-SELECT t.TERRITORY, COUNT(c.CALL_ID) AS TargetedCallCount
-FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY c
-JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS t
-  ON c.ACCOUNT_ID = t.ACCOUNT_ID
-GROUP BY t.TERRITORY;
-```
+Please provide the actual SQL code for review; "give the code" is not valid SQL.
 
 2) Errors  
-No errors found.
+No code provided to review.
 
 3) Quick Suggestions  
-- Use explicit schema for clarity.
-- Ensure proper indexes exist on ACCOUNT_ID and TERRITORY for performance.
-- Use clear column aliases for aggregation results.
+- Paste the SQL query using the correct select and join statements.
+- Ensure country exists in at least one of the two tables to aggregate by it.
 
 ## Git Blame
 ```
-15f1c11ab6c29e4a1134a171be58519f667799ae 1 1 1
-author a241983
-author-mail <a241983@LWPG02MPMR>
-author-time 1769078387
+0000000000000000000000000000000000000000 1 1 1
+author Not Committed Yet
+author-mail <not.committed.yet>
+author-time 1769148084
 author-tz +0530
-committer a241983
-committer-mail <a241983@LWPG02MPMR>
-committer-time 1769078387
+committer Not Committed Yet
+committer-mail <not.committed.yet>
+committer-time 1769148084
 committer-tz +0530
-summary Code review for pasted_code.sql
-previous 16292e6835167895052f79c0f0cb6a4771b98630 pasted_code.sql
+summary Version of pasted_code.sql from pasted_code.sql
+previous 9edc7fc02fbbd2774ba5f8dcffdb858a2141e4ee pasted_code.sql
 filename pasted_code.sql
-	give me the correct code
+	give the code
 ```
