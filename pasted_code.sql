@@ -1,1 +1,1 @@
-give the code
+Join AIP_CRM_CALL_ACTIVITY with AIP_ACCOUNT_TARGETS with account and Territory as a key to find no of targeted calls by country. give the code
