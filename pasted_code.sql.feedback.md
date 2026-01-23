@@ -14,20 +14,21 @@ Execution blocked: Only read-only queries starting with SELECT or WITH are allow
 ## AI Feedback
 1) Corrections —  
 ```sql
-SELECT at.Country, COUNT(*) AS TargetedCalls
-FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY ca
-INNER JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS at
-  ON ca.Account = at.Account AND ca.Territory = at.Territory
-GROUP BY at.Country;
+SELECT t.COUNTRY, COUNT(*) AS TARGETED_CALLS
+FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY c
+JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS t
+  ON c.ACCOUNT = t.ACCOUNT
+ AND c.TERRITORY = t.TERRITORY
+GROUP BY t.COUNTRY;
 ```
 
 2) Errors —  
 No errors found.
 
 3) Quick Suggestions —  
-Add explicit column names in SELECT for clarity.  
-Consider filtering by call type if needed (e.g., targeted calls).  
-Check for NULLs in join keys for accurate counts.
+Add an explicit filter for valid/targeted calls if required.  
+Consider indexing ACCOUNT and TERRITORY columns for faster joins.  
+Use aliases for tables and columns for better readability.
 
 ## Git Blame
 ```
