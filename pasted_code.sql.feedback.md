@@ -1,7 +1,7 @@
 # Code Review Feedback for `pasted_code.sql`
 
 ## Description
-Join AIP_CRM_CALL_ACTIVITY with AIP_ACCOUNT_TARGETS with account and Territory as a key to find no of targeted calls by country. give the code
+Join AIP_CRM_CALL_ACTIVITY with AIP_ACCOUNT_TARGETS with account and Territory as a key to find no of targeted calls by country EUROPE_FIELD_INTELLIGENCE is the schema. give the code
 
 ## Uploaded Code
 ```sql
@@ -14,34 +14,33 @@ Execution blocked: Only read-only queries starting with SELECT or WITH are allow
 ## AI Feedback
 1) Corrections —  
 ```sql
-SELECT t.Country, COUNT(c.Call_ID) AS Targeted_Calls
-FROM AIP_CRM_CALL_ACTIVITY c
-JOIN AIP_ACCOUNT_TARGETS t
-  ON c.Account_ID = t.Account_ID
-  AND c.Territory_ID = t.Territory_ID
-GROUP BY t.Country;
+SELECT at.Country, COUNT(*) AS TargetedCalls
+FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY ca
+INNER JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS at
+  ON ca.Account = at.Account AND ca.Territory = at.Territory
+GROUP BY at.Country;
 ```
 
 2) Errors —  
 No errors found.
 
 3) Quick Suggestions —  
-1. Ensure all joined columns exist in both tables and schema.  
-2. Use explicit column names (avoid SELECT *).  
-3. Add WHERE criteria if additional filtering by call activity is needed.
+Add explicit column names in SELECT for clarity.  
+Consider filtering by call type if needed (e.g., targeted calls).  
+Check for NULLs in join keys for accurate counts.
 
 ## Git Blame
 ```
-0000000000000000000000000000000000000000 1 1 1
-author Not Committed Yet
-author-mail <not.committed.yet>
+98bb6dbe15f6a4a8fc1d7a14326a8aabe5e02128 1 1 1
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1769150415
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1769150415
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 7b8307daf5c5ad0307491d73fa4969d55686771e pasted_code.sql
 filename pasted_code.sql
 	Join AIP_CRM_CALL_ACTIVITY with AIP_ACCOUNT_TARGETS with account and Territory as a key to find no of targeted calls by country. give the code
