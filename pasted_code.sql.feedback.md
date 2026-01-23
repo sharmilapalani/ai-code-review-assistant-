@@ -12,45 +12,31 @@ give the code
 Execution blocked: Only read-only queries starting with SELECT or WITH are allowed to be executed against CDL.
 
 ## AI Feedback
-Actual tables/columns present:
-- AIP_CRM_CALL_ACTIVITY
-  - Contains: ACCOUNT_ID, TERRITORY_ID
-- AIP_ACCOUNT_TARGETS
-  - Contains: ACCOUNT_KEY, TERRITORY_KEY
-
-Assumption (based on Schema Validation): ACCOUNT_ID ~ ACCOUNT_KEY, TERRITORY_ID ~ TERRITORY_KEY.
-
-Code generation as requested:
-
+1) Corrections —
 ```sql
-SELECT
-  c.TERRITORY_ID,
-  COUNT(*) AS targeted_calls
-FROM
-  AIP_CRM_CALL_ACTIVITY c
-JOIN
-  AIP_ACCOUNT_TARGETS t
-    ON c.ACCOUNT_ID = t.ACCOUNT_KEY
-    AND c.TERRITORY_ID = t.TERRITORY_KEY
-GROUP BY
-  c.TERRITORY_ID
+SELECT 
+  t.TERRITORY_ID,
+  COUNT(c.CALL_ACTIVITY_ID) AS NUM_TARGETED_CALLS
+FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY c
+JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS t
+  ON c.ACCOUNT_ID = t.ACCOUNT_ID
+  AND c.TERRITORY_ID = t.TERRITORY_ID
+GROUP BY t.TERRITORY_ID
 ```
-
-1) Corrections — Code generated as requested.
 2) Errors — No errors found.
 
 ## Git Blame
 ```
-0000000000000000000000000000000000000000 1 1 1
-author Not Committed Yet
-author-mail <not.committed.yet>
+577d7dc5fce44e44595bf0853556ca8661e68970 1 1 1
+author a241983
+author-mail <a241983@LWPG02MPMR>
 author-time 1769153041
 author-tz +0530
-committer Not Committed Yet
-committer-mail <not.committed.yet>
+committer a241983
+committer-mail <a241983@LWPG02MPMR>
 committer-time 1769153041
 committer-tz +0530
-summary Version of pasted_code.sql from pasted_code.sql
+summary Code review for pasted_code.sql
 previous 2b419c101e3ea107383eba4f85e5a4d3a04b5b72 pasted_code.sql
 filename pasted_code.sql
 	give the code
