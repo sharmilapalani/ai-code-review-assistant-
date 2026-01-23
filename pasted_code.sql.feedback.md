@@ -13,22 +13,28 @@ Execution blocked: Only read-only queries starting with SELECT or WITH are allow
 
 ## AI Feedback
 1) Corrections  
-```sql
-SELECT at.COUNTRY, COUNT(ca.CALL_ID) AS targeted_calls
-FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY ca
-INNER JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS at
-  ON ca.ACCOUNT_ID = at.ACCOUNT_ID
-  AND ca.TERRITORY_ID = at.TERRITORY_ID
-GROUP BY at.COUNTRY;
-```
+- No SQL code was provided. Generating SQL based on schema validation.
 
 2) Errors  
-Major errors: Input is not SQL code. No reference to “COUNTRY” column in the code. Required JOIN and aggregation missing.
+- No errors found (since only a request for SQL generation).
 
 3) Quick Suggestions  
-- Reference correct columns for join and country.  
-- Alias tables for readability.
-- Only SELECT queries are allowed.
+- Ensure COUNTRY is derived/joined from a Geography or Account-related table if not present.
+- Join on existing ACCOUNT_ID and TERRITORY_ID columns only.
+- Count only targeted calls (if there is a relevant 'targeted' field; otherwise, just count calls per join logic).
+
+Example SQL:
+```sql
+SELECT g.COUNTRY, COUNT(*) AS num_targeted_calls
+FROM EUROPE_FIELD_INTELLIGENCE.AIP_CRM_CALL_ACTIVITY ca
+JOIN EUROPE_FIELD_INTELLIGENCE.AIP_ACCOUNT_TARGETS at 
+  ON ca.ACCOUNT_ID = at.ACCOUNT_ID AND ca.TERRITORY_ID = at.TERRITORY_ID
+JOIN EUROPE_FIELD_INTELLIGENCE.ACCOUNT acc
+  ON ca.ACCOUNT_ID = acc.ACCOUNT_ID
+JOIN EUROPE_FIELD_INTELLIGENCE.GEOGRAPHY g
+  ON acc.GEOGRAPHY_ID = g.GEOGRAPHY_ID
+GROUP BY g.COUNTRY;
+```
 
 ## Git Blame
 ```
